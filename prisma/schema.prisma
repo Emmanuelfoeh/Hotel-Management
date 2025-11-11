@@ -1,0 +1,197 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Core Models
+
+model Room {
+  id          String     @id @default(cuid())
+  name        String
+  type        RoomType
+  description String?    @db.Text
+  price       Decimal    @db.Decimal(10, 2)
+  capacity    Int
+  amenities   String[] // Array of amenity strings
+  images      String[] // Array of image URLs
+  status      RoomStatus @default(AVAILABLE)
+  floor       Int?
+  roomNumber  String     @unique
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  bookings Booking[]
+
+  @@index([status])
+  @@index([type])
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  bookingNumber   String        @unique
+  roomId          String
+  customerId      String
+  checkInDate     DateTime
+  checkOutDate    DateTime
+  numberOfGuests  Int
+  totalAmount     Decimal       @db.Decimal(10, 2)
+  paymentStatus   PaymentStatus @default(PENDING)
+  bookingStatus   BookingStatus @default(CONFIRMED)
+  specialRequests String?       @db.Text
+  source          BookingSource @default(ONLINE)
+  createdById     String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  room      Room      @relation(fields: [roomId], references: [id])
+  customer  Customer  @relation(fields: [customerId], references: [id])
+  createdBy Staff?    @relation(fields: [createdById], references: [id])
+  payments  Payment[]
+
+  @@index([checkInDate, checkOutDate])
+  @@index([bookingStatus])
+  @@index([customerId])
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String   @unique
+  phone     String
+  address   String?
+  city      String?
+  country   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings Booking[]
+
+  @@index([email])
+}
+
+model Staff {
+  id        String    @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String    @unique
+  phone     String
+  role      StaffRole
+  password  String // Hashed
+  isActive  Boolean   @default(true)
+  hireDate  DateTime?
+  notes     String?   @db.Text
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  bookings     Booking[]
+  activityLogs ActivityLog[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  bookingId     String
+  amount        Decimal       @db.Decimal(10, 2)
+  paymentMethod PaymentMethod
+  paymentStatus PaymentStatus
+  transactionId String?       @unique
+  paystackRef   String?
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+}
+
+model ActivityLog {
+  id         String     @id @default(cuid())
+  entityType EntityType
+  entityId   String
+  action     ActionType
+  userId     String
+  details    Json?
+  ipAddress  String?
+  createdAt  DateTime   @default(now())
+
+  user Staff @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Enums
+
+enum RoomType {
+  SINGLE
+  DOUBLE
+  SUITE
+  DELUXE
+  PRESIDENTIAL
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+  FAILED
+}
+
+enum BookingSource {
+  ONLINE
+  MANUAL
+  PHONE
+  WALKIN
+}
+
+enum StaffRole {
+  MANAGER
+  RECEPTIONIST
+  CLEANER
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  PAYSTACK
+  BANK_TRANSFER
+}
+
+enum EntityType {
+  ROOM
+  BOOKING
+  CUSTOMER
+  STAFF
+}
+
+enum ActionType {
+  CREATE
+  UPDATE
+  DELETE
+  CHECK_IN
+  CHECK_OUT
+}

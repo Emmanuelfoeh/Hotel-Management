@@ -1,0 +1,406 @@
+# Implementation Plan
+
+- [x] 1. Initialize Next.js project and configure development environment
+  - Create Next.js 14+ project with TypeScript and App Router
+  - Install and configure TailwindCSS 4
+  - Set up shadcn/ui component library
+  - Configure ESLint and Prettier
+  - Create .env.example file with all required environment variables
+  - _Requirements: 10.1_
+
+- [x] 2. Set up database and Prisma ORM
+  - Install Prisma and PostgreSQL client
+  - Create Prisma schema with all models (Room, Booking, Customer, Staff, Payment, ActivityLog)
+  - Define all enums (RoomType, RoomStatus, BookingStatus, PaymentStatus, StaffRole, etc.)
+  - Add database indexes for optimized queries
+  - Create initial migration
+  - _Requirements: 4.1, 5.1, 6.1, 7.1_
+
+- [x] 3. Implement authentication system
+  - [x] 3.1 Configure NextAuth.js v5
+    - Install NextAuth.js and dependencies
+    - Create auth configuration file with credentials provider
+    - Set up session strategy and callbacks
+    - Configure JWT and session handling
+    - _Requirements: 11.1, 11.4_
+  - [x] 3.2 Create authentication pages and components
+    - Build login page with form validation
+    - Create auth layout component
+    - Implement logout functionality
+    - Add session provider wrapper
+    - _Requirements: 11.4, 11.5_
+  - [x] 3.3 Implement role-based access control middleware
+    - Create authorization middleware for admin routes
+    - Implement permission checking utilities
+    - Add role-based route protection
+    - Create unauthorized/forbidden error pages
+    - _Requirements: 11.2, 11.3_
+
+- [x] 4. Create shared UI components and layouts
+  - [x] 4.1 Set up theme system
+    - Install and configure next-themes
+    - Create theme provider component
+    - Build theme toggle component with dark/light mode
+    - Configure TailwindCSS dark mode
+    - _Requirements: 10.2_
+  - [x] 4.2 Build shadcn/ui base components
+    - Install shadcn/ui CLI and initialize
+    - Add button, input, label, card, badge components
+    - Add dialog, dropdown-menu, select, textarea components
+    - Add table, tabs, toast, tooltip components
+    - Add calendar, form, checkbox, radio-group components
+    - _Requirements: 10.1_
+  - [x] 4.3 Create shared utility components
+    - Build loading spinner component
+    - Create error boundary component
+    - Build empty state component
+    - Create confirmation dialog component
+    - _Requirements: 10.4_
+
+- [x] 5. Implement data validation schemas
+  - Create Zod validation schemas for Room entity
+  - Create Zod validation schemas for Booking entity
+  - Create Zod validation schemas for Customer entity
+  - Create Zod validation schemas for Staff entity
+  - Create Zod validation schemas for Payment entity
+  - Add validation helper utilities
+  - _Requirements: 4.1, 5.1, 6.1, 7.1_
+
+- [x] 6. Build service layer for business logic
+  - [x] 6.1 Create room service
+    - Implement CRUD operations for rooms
+    - Add room availability checking logic
+    - Create room search and filter functions
+    - Add room image management functions
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
+  - [x] 6.2 Create booking service
+    - Implement booking creation with validation
+    - Add booking update and cancellation logic
+    - Create check-in and check-out functions
+    - Implement booking search and filter functions
+    - Add booking calendar data aggregation
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
+  - [x] 6.3 Create customer service
+    - Implement customer CRUD operations
+    - Add customer search functionality
+    - Create customer booking history retrieval
+    - _Requirements: 6.1, 6.2, 6.3_
+  - [x] 6.4 Create staff service
+    - Implement staff CRUD operations with password hashing
+    - Add staff authentication verification
+    - Create staff role management functions
+    - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
+  - [x] 6.5 Create analytics service
+    - Implement dashboard statistics calculation (occupancy, revenue, bookings)
+    - Create chart data aggregation functions
+    - Add date range filtering utilities
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+  - [x] 6.6 Create report service
+    - Implement daily report generation logic
+    - Create monthly report generation logic
+    - Add PDF export functionality using jsPDF or react-pdf
+    - Add CSV export functionality
+    - _Requirements: 8.1, 8.2, 8.3, 8.4_
+
+- [x] 7. Implement payment integration
+  - [x] 7.1 Set up Paystack integration
+    - Install Paystack SDK
+    - Create payment service with initialization logic
+    - Implement payment verification function
+    - Add payment status update logic
+    - _Requirements: 2.4, 5.5_
+  - [x] 7.2 Create payment webhook handler
+    - Build API route for Paystack webhooks
+    - Implement webhook signature verification
+    - Add payment success handling logic
+    - Create payment failure handling logic
+    - Update booking and payment records on webhook events
+    - _Requirements: 2.5, 5.5_
+
+- [x] 8. Implement email notification system
+  - Install email service (Resend or Nodemailer)
+  - Create email service with template rendering
+  - Build booking confirmation email template
+  - Build booking cancellation email template
+  - Build check-in welcome email template
+  - Implement email sending functions with error handling
+  - _Requirements: 9.1, 9.2, 9.3_
+
+- [x] 9. Create activity logging system
+  - Implement activity log creation function
+  - Add logging middleware for all CRUD operations
+  - Create activity log retrieval with filtering
+  - Build activity log display component
+  - _Requirements: 9.4, 9.5_
+
+- [x] 10. Build public portal pages
+  - [x] 10.1 Create public layout and navigation
+    - Build public layout component with header and footer
+    - Create responsive navbar with logo, navigation links (Home, About, Services, Contact), and Login/Sign Up buttons
+    - Add hamburger menu for mobile navigation
+    - Build dark footer with multi-column layout (About, Quick Links, Resources, Contact)
+    - Add social media icons to footer
+    - Add copyright text to footer
+    - Integrate theme toggle in navbar
+    - _Requirements: 10.4, 10.5_
+  - [x] 10.2 Build home page
+    - Create hero section with full-width background image and overlay
+    - Add hero heading "Your Dream Stay Awaits - Book the Perfect Hotel Today"
+    - Build integrated search bar with check-in/check-out dates, guests selector, and search button
+    - Create "Luxury & Comfort Choices" amenities section with icon grid (WiFi, Parking, Pool, Gym, Restaurant, etc.)
+    - Build "Check Out Premium Stays" section with horizontal scrollable card carousel
+    - Create "Explore All Our Hotels" section with property grid (4 columns) and filter tabs
+    - Add statistics banner with teal background showing key metrics (100+ customers, 15+ years, 800+ properties, 12+ awards)
+    - Build testimonials section with customer reviews carousel
+    - Create newsletter subscription section with email form
+    - Implement smooth scroll animations with Framer Motion
+    - _Requirements: 1.1, 10.3, 10.4_
+  - [x] 10.3 Build gallery page
+    - Create responsive image grid layout
+    - Implement lightbox functionality for image viewing
+    - Add image lazy loading
+    - Integrate Framer Motion animations
+    - _Requirements: 1.1, 10.4_
+  - [x] 10.4 Build rooms listing page
+    - Create property card component with image, name, location, price per night, and star rating
+    - Implement filter tabs at top (All, Hotels, Resorts, Villas, Apartments)
+    - Add room filtering options (type, price, capacity)
+    - Build integrated search bar (sticky on scroll) with date range picker
+    - Display properties in responsive grid (4 columns desktop, 2 tablet, 1 mobile)
+    - Add "View Details" button on each card
+    - Implement hover effects on property cards
+    - _Requirements: 1.2, 1.3, 1.4, 1.5_
+  - [x] 10.5 Build room details page
+    - Create dynamic route for individual room
+    - Display room images in carousel/gallery
+    - Show room details, amenities, and pricing
+    - Add booking button with date selection
+    - Implement availability calendar
+    - _Requirements: 1.2, 1.4_
+  - [x] 10.6 Build booking flow pages
+    - Create booking form page with multi-step wizard
+    - Implement customer information form with validation
+    - Add booking summary with price calculation
+    - Build payment integration UI
+    - Create booking confirmation page
+    - Add booking success animations
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
+
+- [x] 11. Build admin dashboard layout and navigation
+  - Create admin layout component with sidebar and header
+  - Build collapsible sidebar with navigation menu
+  - Implement role-based menu item visibility
+  - Create admin header with user menu and logout
+  - Add breadcrumb navigation
+  - _Requirements: 11.2_
+
+- [x] 12. Build admin dashboard page
+  - [x] 12.1 Create dashboard statistics cards
+    - Build stats card component with icon and value
+    - Display occupancy rate, total bookings, and revenue
+    - Show available rooms, check-ins, and check-outs counts
+    - Add trend indicators and percentage changes
+    - _Requirements: 3.1, 3.2, 3.3, 3.4_
+  - [x] 12.2 Implement dashboard charts
+    - Install and configure Recharts library
+    - Create occupancy rate chart component (line/area chart)
+    - Build revenue chart component (bar chart)
+    - Create bookings trend chart component
+    - Add date range selector for charts
+    - Implement chart animations
+    - _Requirements: 3.5_
+
+- [x] 13. Build rooms management module
+  - [x] 13.1 Create rooms listing page
+    - Build rooms data table with sorting and filtering
+    - Add room status badges (available, occupied, maintenance)
+    - Implement search functionality
+    - Add action buttons (edit, delete, view)
+    - Create "Add New Room" button
+    - _Requirements: 4.1, 4.2, 4.3, 4.5_
+  - [x] 13.2 Build room form for create/edit
+    - Create room form component with React Hook Form
+    - Add form fields for name, type, description, price, capacity
+    - Implement amenities multi-select input
+    - Add room number and floor inputs
+    - Build image upload component with preview
+    - Add form validation with Zod schema
+    - Create server action for room creation
+    - Create server action for room update
+    - _Requirements: 4.1, 4.2, 4.4_
+  - [x] 13.3 Implement room deletion
+    - Add delete confirmation dialog
+    - Create server action for room deletion
+    - Handle deletion errors (active bookings)
+    - Show success/error toast notifications
+    - _Requirements: 4.3_
+
+- [x] 14. Build bookings management module
+  - [x] 14.1 Create bookings listing page
+    - Build bookings data table with sorting and pagination
+    - Add status badges (confirmed, checked-in, checked-out, cancelled)
+    - Display customer name, room, dates, and payment status
+    - Implement search and filter functionality (date, status, customer)
+    - Add quick action buttons (view, check-in, check-out)
+    - Create "New Booking" button
+    - _Requirements: 5.6_
+  - [x] 14.2 Build calendar view page
+    - Install and configure calendar library (react-big-calendar or FullCalendar)
+    - Create calendar component with month/week/day views
+    - Display bookings as calendar events with color coding
+    - Implement event click to view booking details
+    - Add date navigation controls
+    - _Requirements: 5.2_
+  - [x] 14.3 Create booking form for manual bookings
+    - Build booking form component with date pickers
+    - Add customer search/select with autocomplete
+    - Implement new customer creation inline
+    - Add room selection with availability checking
+    - Display price calculation based on dates
+    - Add special requests textarea
+    - Create server action for manual booking creation
+    - _Requirements: 5.1_
+  - [x] 14.4 Build booking details page
+    - Create dynamic route for booking details
+    - Display complete booking information
+    - Show customer details and contact info
+    - Add payment status and history
+    - Implement check-in button with confirmation
+    - Implement check-out button with confirmation
+    - Add cancel booking functionality
+    - Create server actions for check-in and check-out
+    - _Requirements: 5.3, 5.4, 5.5_
+
+- [x] 15. Build customers management module
+  - [x] 15.1 Create customers listing page
+    - Build customers data table with sorting and search
+    - Display customer name, email, phone, and total bookings
+    - Add action buttons (view, edit)
+    - Implement customer search by name, email, or phone
+    - _Requirements: 6.3_
+  - [x] 15.2 Build customer details page
+    - Create dynamic route for customer details
+    - Display customer profile information
+    - Show booking history table with dates and status
+    - Add edit customer button
+    - Implement invoice generation button
+    - Implement receipt generation button
+    - _Requirements: 6.2, 6.4, 6.5_
+  - [x] 15.3 Create customer form component
+    - Build form with fields for name, email, phone, address
+    - Add form validation with Zod schema
+    - Create server action for customer update
+    - Handle form submission with error handling
+    - _Requirements: 6.1_
+
+- [x] 16. Build staff management module
+  - [x] 16.1 Create staff listing page
+    - Build staff data table with role badges
+    - Display staff name, email, role, and status
+    - Add action buttons (view, edit, deactivate)
+    - Create "Add New Staff" button
+    - _Requirements: 7.1, 7.4_
+  - [x] 16.2 Build staff form for create/edit
+    - Create staff form component with all fields
+    - Add role selection dropdown (manager, receptionist, cleaner)
+    - Implement password input for new staff
+    - Add active/inactive toggle
+    - Include notes textarea for performance notes
+    - Add form validation with Zod schema
+    - Create server action for staff creation with password hashing
+    - Create server action for staff update
+    - _Requirements: 7.1, 7.2, 7.3, 7.5_
+
+- [-] 17. Build reports module
+  - [x] 17.1 Create reports page
+    - Build report filters form (date range, report type)
+    - Add report type selector (daily, monthly, custom)
+    - Implement date range picker
+    - Create "Generate Report" button
+    - _Requirements: 8.1, 8.2_
+  - [x] 17.2 Display report results
+    - Create report display component with key metrics
+    - Show occupancy rate, revenue, bookings, and expenses
+    - Display data in tables and summary cards
+    - Add visual charts for trends
+    - _Requirements: 8.1, 8.2, 8.5_
+  - [x] 17.3 Implement report export functionality
+    - Create API route for PDF export
+    - Implement PDF generation with report data
+    - Create API route for CSV export
+    - Implement CSV generation with report data
+    - Add export buttons with download functionality
+    - _Requirements: 8.3, 8.4_
+
+- [x] 18. Build activity logs page
+  - Create activity logs listing page
+  - Build activity log table with entity type, action, user, and timestamp
+  - Implement filtering by date range, entity type, and user
+  - Add pagination for large log datasets
+  - Display log details in expandable rows
+  - _Requirements: 9.5_
+
+- [x] 19. Implement file upload functionality
+  - Install and configure file upload service (Uploadthing or Cloudinary)
+  - Create file upload utility functions
+  - Implement image upload component with drag-and-drop
+  - Add image preview and removal functionality
+  - Handle upload errors and progress indication
+  - _Requirements: 4.4_
+
+- [x] 20. Add animations and transitions
+  - Install and configure Framer Motion
+  - Create animation variants for page transitions
+  - Add hover animations to cards and buttons
+  - Implement modal and drawer animations
+  - Add loading state animations (skeleton loaders)
+  - Create smooth scroll animations for public portal
+  - _Requirements: 10.3_
+
+- [x] 21. Implement responsive design refinements
+  - Test and adjust layouts for mobile (320px-767px)
+  - Test and adjust layouts for tablet (768px-1023px)
+  - Test and adjust layouts for desktop (1024px+)
+  - Ensure all tables are responsive (horizontal scroll or card view)
+  - Optimize navigation for mobile (hamburger menu)
+  - Test touch interactions on mobile devices
+  - _Requirements: 1.5, 10.4_
+
+- [x] 22. Create database seed script
+  - Create seed file with sample data
+  - Add sample rooms with different types and prices
+  - Create admin user account
+  - Add sample customers
+  - Create sample bookings with various statuses
+  - Add sample staff members with different roles
+  - _Requirements: 7.1, 11.1_
+
+- [x] 23. Set up environment configuration
+  - Create comprehensive .env.example file
+  - Document all environment variables
+  - Add environment variable validation
+  - Create setup instructions in README
+  - _Requirements: All_
+
+- [x] 24. Create README and documentation
+  - Write project overview and features list
+  - Document installation and setup steps
+  - Add environment variables documentation
+  - Include database setup instructions
+  - Document API routes and server actions
+  - Add deployment instructions
+  - Include screenshots or demo links
+  - _Requirements: All_
+
+- [x] 25. Final integration and polish
+  - Test complete booking flow from public portal to admin
+  - Verify all CRUD operations work correctly
+  - Test authentication and authorization flows
+  - Verify payment integration with test mode
+  - Test email notifications
+  - Check all form validations
+  - Verify dark mode works across all pages
+  - Test role-based access control
+  - Ensure all error states display properly
+  - Verify responsive design on multiple devices
+  - _Requirements: All_

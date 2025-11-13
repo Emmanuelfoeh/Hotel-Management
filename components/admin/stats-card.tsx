@@ -2,15 +2,31 @@
 
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LucideIcon } from 'lucide-react';
+import {
+  DoorOpen,
+  Calendar,
+  DollarSign,
+  Percent,
+  LogIn,
+  LogOut,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { slideUpVariants } from '@/lib/utils/animations';
+
+const iconMap = {
+  Percent,
+  Calendar,
+  DollarSign,
+  DoorOpen,
+  LogIn,
+  LogOut,
+};
 
 interface StatsCardProps {
   title: string;
   value: string | number;
   description?: string;
-  icon: LucideIcon;
+  icon: keyof typeof iconMap;
   trend?: {
     value: number;
     isPositive: boolean;
@@ -23,11 +39,13 @@ export function StatsCard({
   title,
   value,
   description,
-  icon: Icon,
+  icon,
   trend,
   className,
   index = 0,
 }: StatsCardProps) {
+  const Icon = iconMap[icon];
+
   return (
     <motion.div
       initial="initial"

@@ -19,18 +19,16 @@ const envSchema = z.object({
     .min(32, 'NEXTAUTH_SECRET must be at least 32 characters'),
 
   // Paystack
-  PAYSTACK_SECRET_KEY: z.string().min(1, 'PAYSTACK_SECRET_KEY is required'),
-  NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY: z
-    .string()
-    .min(1, 'NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY is required'),
+  PAYSTACK_SECRET_KEY: z.string(),
+  NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY: z.string(),
 
   // Email
-  RESEND_API_KEY: z.string().min(1, 'RESEND_API_KEY is required'),
-  EMAIL_FROM: z.string().email('EMAIL_FROM must be a valid email address'),
+  RESEND_API_KEY: z.string(),
+  EMAIL_FROM: z.string(),
 
   // File Upload
-  UPLOADTHING_SECRET: z.string().min(1, 'UPLOADTHING_SECRET is required'),
-  UPLOADTHING_APP_ID: z.string().min(1, 'UPLOADTHING_APP_ID is required'),
+  UPLOADTHING_SECRET: z.string(),
+  UPLOADTHING_APP_ID: z.string(),
 
   // Application
   NEXT_PUBLIC_APP_URL: z
@@ -73,37 +71,37 @@ function validateEnv(): Env {
       NEXTAUTH_URL: process.env.NEXTAUTH_URL,
       NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
 
-      // Paystack
+      // // Paystack
       PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,
       NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY:
         process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
 
-      // Email
+      // // Email
       RESEND_API_KEY: process.env.RESEND_API_KEY,
       EMAIL_FROM: process.env.EMAIL_FROM,
 
-      // File Upload
+      // // File Upload
       UPLOADTHING_SECRET: process.env.UPLOADTHING_SECRET,
       UPLOADTHING_APP_ID: process.env.UPLOADTHING_APP_ID,
 
-      // Application
+      // // Application
       NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
       NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
 
-      // Optional
-      NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
-      SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
-      SENTRY_ORG: process.env.SENTRY_ORG,
-      SENTRY_PROJECT: process.env.SENTRY_PROJECT,
-      NEXT_PUBLIC_GA_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
-      DEBUG: process.env.DEBUG,
-      NODE_ENV: process.env.NODE_ENV,
+      // // Optional
+      // NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+      // SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
+      // SENTRY_ORG: process.env.SENTRY_ORG,
+      // SENTRY_PROJECT: process.env.SENTRY_PROJECT,
+      // NEXT_PUBLIC_GA_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
+      // DEBUG: process.env.DEBUG,
+      // NODE_ENV: process.env.NODE_ENV,
     });
 
     return env;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const missingVars = error.errors.map((err) => {
+      const missingVars = error.issues.map((err) => {
         return `  ❌ ${err.path.join('.')}: ${err.message}`;
       });
 

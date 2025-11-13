@@ -19,6 +19,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { useCreateBooking } from '@/hooks/use-booking';
+import { toast } from 'sonner';
 
 const bookingSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -40,11 +42,12 @@ function BookingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const createBooking = useCreateBooking();
 
-  const roomId = searchParams.get('roomId');
+  const roomId = searchParams.get('roomId') || 'default-room-id';
   const checkIn = searchParams.get('checkIn');
   const checkOut = searchParams.get('checkOut');
+  const guests = parseInt(searchParams.get('guests') || '2');
 
   const form = useForm<BookingFormData>({
     resolver: zodResolver(bookingSchema),
@@ -58,7 +61,7 @@ function BookingPageContent() {
     },
   });
 
-  // Mock room data
+  // Mock room data - TODO: Fetch from API
   const roomData = {
     name: 'Grand Plaza Hotel',
     price: 250,
@@ -97,20 +100,38 @@ function BookingPageContent() {
   };
 
   const onSubmit = async (data: BookingFormData) => {
-    setIsProcessing(true);
+    if (!checkIn || !checkOut) {
+      toast.error('Please select check-in and check-out dates');
+      return;
+    }
 
-    // Log booking data for development
-    console.log('Booking data:', data);
-
-    // Simulate payment processing
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // In real app, this would integrate with Paystack
-    // Generate booking ID using timestamp for uniqueness
-    const bookingId = `BK-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-
-    setIsProcessing(false);
-    router.push(`/booking/confirmation?bookingId=${bookingId}`);
+    createBooking.mutate(
+      {
+        roomId,
+        customerEmail: data.email,
+        customerFirstName: data.firstName,
+        customerLastName: data.lastName,
+        customerPhone: data.phone,
+        checkInDate: checkIn,
+        checkOutDate: checkOut,
+        numberOfGuests: guests,
+        totalAmount: total,
+        specialRequests: data.specialRequests,
+      },
+      {
+        onSuccess: (response) => {
+          if (response.success && response.payment) {
+            // Redirect to Paystack payment page
+            window.location.href = response.payment.authorizationUrl;
+          } else {
+            toast.error(response.error || 'Failed to create booking');
+          }
+        },
+        onError: (error: any) => {
+          toast.error(error.message || 'Failed to create booking');
+        },
+      }
+    );
   };
 
   return (
@@ -313,11 +334,11 @@ function BookingPageContent() {
                             </p>
                             <Button
                               type="submit"
-                              disabled={isProcessing}
+                              disabled={createBooking.isPending}
                               className="w-full bg-teal-600 hover:bg-teal-700"
                               size="lg"
                             >
-                              {isProcessing
+                              {createBooking.isPending
                                 ? 'Processing...'
                                 : 'Proceed to Payment'}
                             </Button>

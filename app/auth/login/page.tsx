@@ -1,7 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -24,6 +23,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/hooks/use-auth';
+import { toast } from 'sonner';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -35,8 +36,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { login, isLoggingIn } = useAuth();
 
   const callbackUrl = searchParams.get('callbackUrl') || '/admin/dashboard';
 
@@ -49,27 +49,23 @@ function LoginForm() {
   });
 
   async function onSubmit(data: LoginFormValues) {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const result = await signIn('credentials', {
-        email: data.email,
-        password: data.password,
-        redirect: false,
-      });
-
-      if (result?.error) {
-        setError(result.error);
-      } else if (result?.ok) {
-        router.push(callbackUrl);
-        router.refresh();
+    login(
+      { ...data, callbackUrl },
+      {
+        onSuccess: (response) => {
+          if (response.success) {
+            toast.success('Signed in successfully!');
+            router.push(callbackUrl);
+            router.refresh();
+          } else {
+            toast.error(response.error || 'Invalid credentials');
+          }
+        },
+        onError: (error: any) => {
+          toast.error(error.message || 'An unexpected error occurred');
+        },
       }
-    } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    );
   }
 
   return (
@@ -83,12 +79,6 @@ function LoginForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-md text-sm">
-                {error}
-              </div>
-            )}
-
             <FormField
               control={form.control}
               name="email"
@@ -99,7 +89,7 @@ function LoginForm() {
                     <Input
                       type="email"
                       placeholder="admin@hotel.com"
-                      disabled={isLoading}
+                      disabled={isLoggingIn}
                       {...field}
                     />
                   </FormControl>
@@ -118,7 +108,7 @@ function LoginForm() {
                     <Input
                       type="password"
                       placeholder="••••••••"
-                      disabled={isLoading}
+                      disabled={isLoggingIn}
                       {...field}
                     />
                   </FormControl>
@@ -127,8 +117,8 @@ function LoginForm() {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Signing in...' : 'Sign in'}
+            <Button type="submit" className="w-full" disabled={isLoggingIn}>
+              {isLoggingIn ? 'Signing in...' : 'Sign in'}
             </Button>
 
             <div className="text-center text-sm text-muted-foreground">

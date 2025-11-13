@@ -56,7 +56,7 @@ interface RoomFormProps {
     name: string;
     type: RoomType;
     description: string | null;
-    price: any;
+    price: number;
     capacity: number;
     amenities: string[];
     images: string[];

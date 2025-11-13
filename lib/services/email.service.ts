@@ -1,7 +1,8 @@
 import { Resend } from 'resend';
 import { env } from '@/lib/env';
+import { kill } from 'process';
 
-const resend = new Resend(env.RESEND_API_KEY);
+const resend = new Resend('kill');
 
 interface EmailOptions {
   to: string;

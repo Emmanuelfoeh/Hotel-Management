@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { X, Upload, Loader2, ImageIcon } from 'lucide-react';
 import { useUploadThing } from '@/lib/uploadthing';
@@ -34,6 +34,7 @@ export function ImageUpload({
         onChange([...value, ...urls]);
         toast.success(`${res.length} image(s) uploaded successfully`);
       }
+      // Reset upload state
       setUploading(false);
       setUploadProgress(0);
     },
@@ -47,9 +48,18 @@ export function ImageUpload({
     },
   });
 
+  // Sync internal uploading state with hook's isUploading
+  useEffect(() => {
+    if (!isUploading && uploading) {
+      // If hook says not uploading but we think we are, reset
+      setUploading(false);
+      setUploadProgress(0);
+    }
+  }, [isUploading, uploading]);
+
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
-      if (disabled) return;
+      if (disabled || uploading) return;
 
       const remainingSlots = maxFiles - value.length;
       if (acceptedFiles.length > remainingSlots) {
@@ -57,15 +67,23 @@ export function ImageUpload({
         return;
       }
 
+      if (acceptedFiles.length === 0) {
+        return;
+      }
+
       setUploading(true);
+      setUploadProgress(0);
+
       try {
         await startUpload(acceptedFiles);
       } catch (error) {
         console.error('Upload error:', error);
+        toast.error('Failed to upload images');
         setUploading(false);
+        setUploadProgress(0);
       }
     },
-    [disabled, maxFiles, value.length, startUpload]
+    [disabled, uploading, maxFiles, value.length, startUpload]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({

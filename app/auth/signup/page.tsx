@@ -1,11 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -24,41 +23,29 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { useCreateCustomer } from '@/hooks/use-customer';
 
-const signupSchema = z
-  .object({
-    firstName: z
-      .string()
-      .min(2, 'First name must be at least 2 characters')
-      .max(50, 'First name is too long'),
-    lastName: z
-      .string()
-      .min(2, 'Last name must be at least 2 characters')
-      .max(50, 'Last name is too long'),
-    email: z.string().email('Invalid email address'),
-    phone: z
-      .string()
-      .min(10, 'Phone number must be at least 10 digits')
-      .regex(/^[+]?[\d\s()-]+$/, 'Invalid phone number format'),
-    password: z
-      .string()
-      .min(8, 'Password must be at least 8 characters')
-      .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        'Password must contain at least one uppercase letter, one lowercase letter, and one number'
-      ),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ['confirmPassword'],
-  });
+const signupSchema = z.object({
+  firstName: z
+    .string()
+    .min(2, 'First name must be at least 2 characters')
+    .max(50, 'First name is too long'),
+  lastName: z
+    .string()
+    .min(2, 'Last name must be at least 2 characters')
+    .max(50, 'Last name is too long'),
+  email: z.string().email('Invalid email address'),
+  phone: z
+    .string()
+    .min(10, 'Phone number must be at least 10 digits')
+    .regex(/^[+]?[\d\s()-]+$/, 'Invalid phone number format'),
+});
 
 type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const createCustomer = useCreateCustomer();
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
@@ -67,26 +54,27 @@ export default function SignupPage() {
       lastName: '',
       email: '',
       phone: '',
-      password: '',
-      confirmPassword: '',
     },
   });
 
   async function onSubmit(data: SignupFormValues) {
-    setIsLoading(true);
-
-    try {
-      // In a real application, this would call an API endpoint to create the user
-      // For now, we'll simulate the signup process
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      toast.success('Account created successfully! Please sign in.');
-      router.push('/auth/login');
-    } catch (error) {
-      toast.error('Failed to create account. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    createCustomer.mutate(data, {
+      onSuccess: (response) => {
+        if (response.success) {
+          toast.success(
+            'Account created successfully! You can now make bookings.'
+          );
+          router.push('/rooms');
+        } else {
+          toast.error(response.error || 'Failed to create account');
+        }
+      },
+      onError: (error: any) => {
+        toast.error(
+          error.message || 'Failed to create account. Please try again.'
+        );
+      },
+    });
   }
 
   return (
@@ -94,7 +82,7 @@ export default function SignupPage() {
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
         <CardDescription>
-          Enter your information to create a guest account
+          Enter your information to create a guest account for booking
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -110,7 +98,7 @@ export default function SignupPage() {
                     <FormControl>
                       <Input
                         placeholder="John"
-                        disabled={isLoading}
+                        disabled={createCustomer.isPending}
                         {...field}
                       />
                     </FormControl>
@@ -128,7 +116,7 @@ export default function SignupPage() {
                     <FormControl>
                       <Input
                         placeholder="Doe"
-                        disabled={isLoading}
+                        disabled={createCustomer.isPending}
                         {...field}
                       />
                     </FormControl>
@@ -148,7 +136,7 @@ export default function SignupPage() {
                     <Input
                       type="email"
                       placeholder="john.doe@example.com"
-                      disabled={isLoading}
+                      disabled={createCustomer.isPending}
                       {...field}
                     />
                   </FormControl>
@@ -167,7 +155,7 @@ export default function SignupPage() {
                     <Input
                       type="tel"
                       placeholder="+1 (555) 123-4567"
-                      disabled={isLoading}
+                      disabled={createCustomer.isPending}
                       {...field}
                     />
                   </FormControl>
@@ -176,55 +164,23 @@ export default function SignupPage() {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      disabled={isLoading}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirm Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      disabled={isLoading}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Creating account...' : 'Create account'}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={createCustomer.isPending}
+            >
+              {createCustomer.isPending
+                ? 'Creating account...'
+                : 'Create account'}
             </Button>
 
             <div className="text-center text-sm text-muted-foreground">
-              Already have an account?{' '}
+              Staff member?{' '}
               <Link
                 href="/auth/login"
                 className="text-primary hover:underline font-medium"
               >
-                Sign in
+                Sign in here
               </Link>
             </div>
           </form>

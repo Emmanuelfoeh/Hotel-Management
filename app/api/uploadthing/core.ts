@@ -20,10 +20,10 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ metadata, file }) => {
       // This code runs on your server after upload
       console.log('Upload complete for userId:', metadata.userId);
-      console.log('File URL:', file.url);
+      console.log('File URL:', file.appUrl);
 
       // Return data to the client
-      return { uploadedBy: metadata.userId, url: file.url };
+      return { uploadedBy: metadata.userId };
     }),
 
   // Gallery image uploader
@@ -35,8 +35,8 @@ export const ourFileRouter = {
     })
     .onUploadComplete(async ({ metadata, file }) => {
       console.log('Gallery upload complete for userId:', metadata.userId);
-      console.log('File URL:', file.url);
-      return { uploadedBy: metadata.userId, url: file.url };
+      console.log('File URL:', file.appUrl);
+      return { uploadedBy: metadata.userId };
     }),
 } satisfies FileRouter;
 

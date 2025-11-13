@@ -19,6 +19,7 @@ export function Navbar() {
     { href: '/rooms', label: 'Rooms' },
     { href: '/services', label: 'Services' },
     { href: '/gallery', label: 'Gallery' },
+    { href: '/bookings/lookup', label: 'My Bookings' },
     { href: '/contact', label: 'Contact' },
   ];
 

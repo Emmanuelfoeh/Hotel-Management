@@ -3,35 +3,96 @@
 import { useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { CheckCircle, Download, Mail, Calendar, MapPin } from 'lucide-react';
+import {
+  CheckCircle,
+  Download,
+  Mail,
+  Calendar,
+  MapPin,
+  Loader2,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  useBookingByReference,
+  useResendConfirmation,
+} from '@/hooks/use-booking';
+import { verifyPaymentAction } from '@/actions/payment.actions';
+import { toast } from 'sonner';
 
 function BookingConfirmationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const bookingId = searchParams.get('bookingId');
+  const reference = searchParams.get('reference');
+  const resendConfirmation = useResendConfirmation();
+
+  const { data, isLoading, error } = useBookingByReference(reference);
 
   useEffect(() => {
-    if (!bookingId) {
+    if (!reference) {
       router.push('/');
+      return;
     }
-  }, [bookingId, router]);
 
-  // Mock booking data - using useMemo to avoid impure function calls during render
-  const bookingData = {
-    bookingNumber: bookingId?.toUpperCase() || 'BOOKING123',
-    roomName: 'Grand Plaza Hotel',
-    location: 'Downtown, New York',
-    checkIn: new Date(new Date().getTime() + 86400000 * 7).toLocaleDateString(),
-    checkOut: new Date(
-      new Date().getTime() + 86400000 * 10
-    ).toLocaleDateString(),
-    guests: 2,
-    total: 825.0,
-    guestName: 'John Doe',
-    email: 'john.doe@example.com',
+    // Verify payment when page loads
+    const verifyPayment = async () => {
+      const result = await verifyPaymentAction(reference);
+      if (!result.success) {
+        console.error('Payment verification failed:', result.error);
+      }
+    };
+
+    verifyPayment();
+  }, [reference, router]);
+
+  const handleResendEmail = async () => {
+    if (!data?.booking?.bookingNumber) return;
+
+    resendConfirmation.mutate(data.booking.bookingNumber, {
+      onSuccess: (response) => {
+        if (response.success) {
+          toast.success('Confirmation email sent successfully!');
+        } else {
+          toast.error(response.error || 'Failed to send email');
+        }
+      },
+      onError: () => {
+        toast.error('Failed to send confirmation email');
+      },
+    });
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <Loader2 className="h-12 w-12 animate-spin mx-auto text-teal-600" />
+        <p className="mt-4 text-muted-foreground">Loading booking details...</p>
+      </div>
+    );
+  }
+
+  if (error || !data?.success || !data?.booking) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="p-6">
+            <div className="text-red-600 mb-4">
+              <CheckCircle className="h-16 w-16 mx-auto" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Booking Not Found</h2>
+            <p className="text-muted-foreground mb-4">
+              We couldn't find your booking. Please check your email for the
+              confirmation link.
+            </p>
+            <Button onClick={() => router.push('/')}>Go to Home</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const booking = data.booking;
+  const payment = data.payment;
 
   return (
     <div className="container mx-auto px-4 py-16">
@@ -70,7 +131,7 @@ function BookingConfirmationContent() {
         >
           Thank you for your booking. We&apos;ve sent a confirmation email to{' '}
           <span className="font-medium text-foreground">
-            {bookingData.email}
+            {booking.customer.email}
           </span>
         </motion.p>
 
@@ -88,23 +149,25 @@ function BookingConfirmationContent() {
                   <p className="text-sm text-muted-foreground">
                     Booking Number
                   </p>
-                  <p className="text-2xl font-bold">
-                    {bookingData.bookingNumber}
-                  </p>
+                  <p className="text-2xl font-bold">{booking.bookingNumber}</p>
                 </div>
-                <div className="rounded-full bg-green-100 px-4 py-2 text-sm font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                  Confirmed
+                <div
+                  className={`rounded-full px-4 py-2 text-sm font-medium ${
+                    payment?.paymentStatus === 'PAID'
+                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                      : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                  }`}
+                >
+                  {payment?.paymentStatus === 'PAID' ? 'Paid' : 'Pending'}
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <h3 className="text-lg font-semibold">
-                    {bookingData.roomName}
-                  </h3>
+                  <h3 className="text-lg font-semibold">{booking.room.name}</h3>
                   <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4" />
-                    <span>{bookingData.location}</span>
+                    <span>Room {booking.room.roomNumber}</span>
                   </div>
                 </div>
 
@@ -113,7 +176,9 @@ function BookingConfirmationContent() {
                     <p className="text-sm text-muted-foreground">Check-in</p>
                     <div className="mt-1 flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
-                      <span className="font-medium">{bookingData.checkIn}</span>
+                      <span className="font-medium">
+                        {new Date(booking.checkInDate).toLocaleDateString()}
+                      </span>
                     </div>
                   </div>
                   <div>
@@ -121,16 +186,30 @@ function BookingConfirmationContent() {
                     <div className="mt-1 flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
                       <span className="font-medium">
-                        {bookingData.checkOut}
+                        {new Date(booking.checkOutDate).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
                 </div>
 
+                <div className="rounded-lg bg-muted/50 p-4">
+                  <p className="text-sm text-muted-foreground">Guests</p>
+                  <p className="font-medium">{booking.numberOfGuests} guests</p>
+                </div>
+
+                {booking.specialRequests && (
+                  <div className="rounded-lg bg-muted/50 p-4">
+                    <p className="text-sm text-muted-foreground">
+                      Special Requests
+                    </p>
+                    <p className="font-medium">{booking.specialRequests}</p>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between border-t pt-4">
                   <span className="text-lg font-semibold">Total Paid</span>
                   <span className="text-2xl font-bold text-teal-600">
-                    ${bookingData.total.toFixed(2)}
+                    ${Number(booking.totalAmount).toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -157,11 +236,12 @@ function BookingConfirmationContent() {
           <Button
             variant="outline"
             size="lg"
-            onClick={() => router.push('/')}
+            onClick={handleResendEmail}
+            disabled={resendConfirmation.isPending}
             className="gap-2"
           >
             <Mail className="h-5 w-5" />
-            Resend Email
+            {resendConfirmation.isPending ? 'Sending...' : 'Resend Email'}
           </Button>
         </motion.div>
 
@@ -210,6 +290,13 @@ function BookingConfirmationContent() {
                 info@hotel.com or +1 (234) 567-890.
               </span>
             </li>
+            <li className="flex items-start gap-2">
+              <div className="mt-1 h-1.5 w-1.5 rounded-full bg-teal-600 flex-shrink-0" />
+              <span>
+                You can view your booking anytime using your booking number:{' '}
+                <strong>{booking.bookingNumber}</strong>
+              </span>
+            </li>
           </ul>
         </motion.div>
       </motion.div>
@@ -222,7 +309,8 @@ export default function BookingConfirmationPage() {
     <Suspense
       fallback={
         <div className="container mx-auto px-4 py-16 text-center">
-          Loading...
+          <Loader2 className="h-12 w-12 animate-spin mx-auto text-teal-600" />
+          <p className="mt-4 text-muted-foreground">Loading...</p>
         </div>
       }
     >

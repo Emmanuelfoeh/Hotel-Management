@@ -1,13 +1,5 @@
 import { StatsCard } from '@/components/admin/stats-card';
 import { getDashboardStats } from '@/actions/analytics.actions';
-import {
-  DoorOpen,
-  Calendar,
-  DollarSign,
-  Percent,
-  LogIn,
-  LogOut,
-} from 'lucide-react';
 import { DashboardCharts } from '@/components/admin/charts';
 
 export default async function DashboardPage() {
@@ -39,7 +31,7 @@ export default async function DashboardPage() {
           title="Occupancy Rate"
           value={`${stats.occupancyRate.toFixed(1)}%`}
           description="Current occupancy"
-          icon={Percent}
+          icon="Percent"
           index={0}
         />
 
@@ -47,15 +39,15 @@ export default async function DashboardPage() {
           title="Total Bookings"
           value={stats.totalBookings}
           description="This month"
-          icon={Calendar}
+          icon="Calendar"
           index={1}
         />
 
         <StatsCard
           title="Total Revenue"
-          value={`$${stats.totalRevenue.toLocaleString()}`}
+          value={`${stats.totalRevenue.toLocaleString()}`}
           description="This month"
-          icon={DollarSign}
+          icon="DollarSign"
           index={2}
         />
 
@@ -63,7 +55,7 @@ export default async function DashboardPage() {
           title="Available Rooms"
           value={stats.availableRooms}
           description="Ready for booking"
-          icon={DoorOpen}
+          icon="DoorOpen"
           index={3}
         />
 
@@ -71,7 +63,7 @@ export default async function DashboardPage() {
           title="Today's Check-ins"
           value={stats.todayCheckIns}
           description="Expected arrivals"
-          icon={LogIn}
+          icon="LogIn"
           index={4}
         />
 
@@ -79,7 +71,7 @@ export default async function DashboardPage() {
           title="Today's Check-outs"
           value={stats.todayCheckOuts}
           description="Expected departures"
-          icon={LogOut}
+          icon="LogOut"
           index={5}
         />
       </div>

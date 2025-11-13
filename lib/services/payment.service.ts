@@ -8,7 +8,7 @@ const paystackClient = paystack(env.PAYSTACK_SECRET_KEY);
 
 export interface PaymentInitializationData {
   email: string;
-  amount: number; // Amount in kobo (smallest currency unit)
+  amount: number; // Amount in GH (smallest currency unit)
   bookingId: string;
   reference?: string;
   metadata?: Record<string, any>;

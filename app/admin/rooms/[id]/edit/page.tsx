@@ -16,6 +16,12 @@ export default async function EditRoomPage({ params }: EditRoomPageProps) {
     notFound();
   }
 
+  // Convert Decimal to number for client component
+  const roomData = {
+    ...room,
+    price: Number(room.price),
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -25,7 +31,7 @@ export default async function EditRoomPage({ params }: EditRoomPageProps) {
         </p>
       </div>
 
-      <RoomForm mode="edit" room={room} />
+      <RoomForm mode="edit" room={roomData} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { use, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import {
@@ -63,10 +63,11 @@ const roomData: Record<string, any> = {
 export default function RoomDetailsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
-  const room = roomData[params.id];
+  const { id } = use(params);
+  const room = roomData[id];
   const [selectedDates, setSelectedDates] = useState<
     { from: Date; to: Date } | undefined
   >();

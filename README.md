@@ -11,8 +11,6 @@ A modern, full-stack hotel management system built with Next.js 16, TypeScript, 
 
 - [Features](#-features)
 - [Tech Stack](#-tech-stack)
-- [Prerequisites](#-prerequisites)
-- [Installation](#-installation)
 - [Database Setup](#-database-setup)
 - [Running the Application](#-running-the-application)
 - [Project Structure](#-project-structure)
@@ -86,11 +84,9 @@ A modern, full-stack hotel management system built with Next.js 16, TypeScript, 
 - **File Upload**: Uploadthing
 - **PDF Generation**: jsPDF + jsPDF-AutoTable
 
-
 ### 4. Set Up the Database
 
 See the [Database Setup](#-database-setup) section for detailed instructions.
-
 
 ### Getting API Keys
 
@@ -110,7 +106,6 @@ See the [Database Setup](#-database-setup) section for detailed instructions.
    - Create a new app
    - Copy your App ID and Secret
 
-
 ## 🗄 Database Setup
 
 ### Local Development (PostgreSQL)
@@ -122,7 +117,6 @@ See the [Database Setup](#-database-setup) section for detailed instructions.
    - Ubuntu: `sudo apt-get install postgresql-14`
    - Windows: Download from [postgresql.org](https://www.postgresql.org/download/)
 
-
 ### Cloud Database (Production)
 
 #### Vercel Postgres
@@ -130,7 +124,6 @@ See the [Database Setup](#-database-setup) section for detailed instructions.
 1. Go to your Vercel project dashboard
 2. Navigate to Storage > Create Database > Postgres
 3. Copy the connection string to your environment variables
-
 
 ### Running Migrations
 
@@ -176,7 +169,6 @@ Access the application:
 - Public Portal: `http://localhost:3000`
 - Admin Dashboard: `http://localhost:3000/admin`
 - Login Page: `http://localhost:3000/auth/login`
-
 
 ## 📁 Project Structure
 
@@ -324,8 +316,6 @@ Server actions are located in the `actions/` directory and provide type-safe ser
 - `getActivityLogs(filters)` - Get activity logs with filters
 - `logActivity(data)` - Create activity log entry
 
-
-
 ## 📚 Documentation
 
 Comprehensive documentation is available in the `docs/` directory:
@@ -337,7 +327,6 @@ Comprehensive documentation is available in the `docs/` directory:
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to the project
 
 For a complete documentation index, see [docs/README.md](docs/README.md).
-
 
 ## 🚢 Deployment
 
@@ -384,8 +373,6 @@ Vercel provides the best experience for Next.js applications:
 5. **Configure Webhooks**:
    - Update Paystack webhook URL to: `https://yourdomain.vercel.app/api/webhooks/paystack`
 
-
-
 ### Post-Deployment Checklist
 
 - [ ] All environment variables are set
@@ -400,8 +387,6 @@ Vercel provides the best experience for Next.js applications:
 - [ ] Analytics is configured (optional)
 - [ ] Default admin password is changed
 - [ ] Backup strategy is in place
-
-
 
 ### Development Guidelines
 

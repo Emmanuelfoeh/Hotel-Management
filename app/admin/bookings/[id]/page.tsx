@@ -18,6 +18,8 @@ import { BookingStatus, PaymentStatus } from '@/types';
 import Link from 'next/link';
 import { BookingActions } from '@/components/admin/booking-actions';
 
+export const dynamic = 'force-dynamic';
+
 async function getBooking(id: string) {
   const booking = await bookingService.getBookingById(id);
   if (!booking) {

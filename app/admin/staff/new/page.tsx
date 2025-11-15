@@ -2,6 +2,8 @@ import { StaffForm } from '@/components/admin/forms/staff-form';
 import { requireRole } from '@/lib/utils/auth-helpers';
 import { Card } from '@/components/ui/card';
 
+export const dynamic = 'force-dynamic';
+
 export default async function NewStaffPage() {
   // Only managers can create staff
   await requireRole(['MANAGER']);

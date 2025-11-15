@@ -8,6 +8,8 @@ import Link from 'next/link';
 import { EditIcon } from 'lucide-react';
 import { format } from 'date-fns';
 
+export const dynamic = 'force-dynamic';
+
 interface StaffDetailsPageProps {
   params: Promise<{
     id: string;

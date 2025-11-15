@@ -9,6 +9,8 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
+export const dynamic = 'force-dynamic';
+
 export default async function SettingsPage() {
   const session = await auth();
 

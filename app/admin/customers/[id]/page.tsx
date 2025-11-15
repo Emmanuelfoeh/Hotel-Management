@@ -26,6 +26,8 @@ import { format } from 'date-fns';
 import { BookingStatus, PaymentStatus } from '@/types';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 async function getCustomer(id: string) {
   const customer = await customerService.getCustomerById(id);
   if (!customer) {

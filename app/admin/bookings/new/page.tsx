@@ -2,6 +2,8 @@ import { BookingForm } from '@/components/admin/forms/booking-form';
 import { customerService } from '@/lib/services/customer.service';
 import { roomService } from '@/lib/services/room.service';
 
+export const dynamic = 'force-dynamic';
+
 async function getFormData() {
   const [customers, rooms] = await Promise.all([
     customerService.getCustomers(),

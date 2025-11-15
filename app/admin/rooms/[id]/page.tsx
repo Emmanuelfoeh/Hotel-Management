@@ -7,6 +7,8 @@ import { EditIcon } from 'lucide-react';
 import Link from 'next/link';
 import { RoomStatus, RoomType } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 interface RoomDetailsPageProps {
   params: Promise<{
     id: string;

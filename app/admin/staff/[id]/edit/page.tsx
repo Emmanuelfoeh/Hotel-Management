@@ -3,6 +3,8 @@ import { staffService } from '@/lib/services';
 import { requireRole } from '@/lib/utils/auth-helpers';
 import { StaffForm } from '@/components/admin/forms/staff-form';
 
+export const dynamic = 'force-dynamic';
+
 interface EditStaffPageProps {
   params: Promise<{
     id: string;

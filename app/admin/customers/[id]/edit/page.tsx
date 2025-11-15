@@ -5,6 +5,8 @@ import { requireAuth } from '@/lib/utils/auth-helpers';
 import Link from 'next/link';
 import { CustomerForm } from '@/components/admin/forms/customer-form';
 
+export const dynamic = 'force-dynamic';
+
 async function getCustomer(id: string) {
   const customer = await customerService.getCustomerById(id);
   if (!customer) {

@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import { roomService } from '@/lib/services';
 import { RoomForm } from '@/components/admin/forms/room-form';
 
+export const dynamic = 'force-dynamic';
+
 interface EditRoomPageProps {
   params: Promise<{
     id: string;

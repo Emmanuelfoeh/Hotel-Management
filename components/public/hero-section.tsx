@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { SearchBar } from './search-bar';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -118,7 +118,9 @@ export function HeroSection() {
 
             {/* Search Bar */}
             <div className="mt-6 sm:mt-8">
-              <SearchBar />
+              <Suspense fallback={<div className="h-20 bg-white/10 rounded-lg animate-pulse" />}>
+                <SearchBar />
+              </Suspense>
             </div>
           </motion.div>
         </div>

@@ -117,7 +117,7 @@ export function ChartSkeleton() {
           >
             <Skeleton
               className="w-full"
-              style={{ height: `${Math.random() * 100 + 20}%` }}
+              height={`${Math.random() * 100 + 20}%`}
             />
           </div>
         ))}

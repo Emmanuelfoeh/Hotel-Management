@@ -6,19 +6,8 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const userRole = req.auth?.user?.role;
 
-  // Public routes that don't require authentication
-  const isPublicRoute =
-    pathname === '/' ||
-    pathname.startsWith('/rooms') ||
-    pathname.startsWith('/gallery') ||
-    pathname.startsWith('/booking') ||
-    pathname.startsWith('/auth');
-
   // Admin routes that require authentication
   const isAdminRoute = pathname.startsWith('/admin');
-
-  // API routes
-  const isApiRoute = pathname.startsWith('/api');
 
   // If trying to access admin routes without being logged in
   if (isAdminRoute && !isLoggedIn) {

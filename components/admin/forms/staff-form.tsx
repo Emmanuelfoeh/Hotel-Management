@@ -28,7 +28,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
 interface StaffFormProps {
@@ -47,7 +46,7 @@ interface StaffFormProps {
 }
 
 type CreateFormData = z.infer<typeof createStaffSchema>;
-type UpdateFormData = Omit<z.infer<typeof updateStaffSchema>, 'id'>;
+type UpdateFormData = z.infer<typeof updateStaffSchema>;
 
 export function StaffForm({ staff, mode }: StaffFormProps) {
   const router = useRouter();
@@ -56,10 +55,13 @@ export function StaffForm({ staff, mode }: StaffFormProps) {
   const isEditMode = mode === 'edit';
 
   const form = useForm<CreateFormData | UpdateFormData>({
-    resolver: zodResolver(isEditMode ? updateStaffSchema : createStaffSchema),
+    resolver: zodResolver(
+      isEditMode ? updateStaffSchema : createStaffSchema
+    ) as any,
     defaultValues:
       isEditMode && staff
         ? {
+            id: staff.id,
             firstName: staff.firstName,
             lastName: staff.lastName,
             email: staff.email,
@@ -89,9 +91,18 @@ export function StaffForm({ staff, mode }: StaffFormProps) {
       let result;
 
       if (isEditMode && staff) {
-        result = await updateStaff(staff.id, data as UpdateFormData);
+        const updateData = {
+          id: staff.id,
+          ...data,
+          hireDate: data.hireDate || undefined,
+        };
+        result = await updateStaff(staff.id, updateData as any);
       } else {
-        result = await createStaff(data as CreateFormData);
+        const createData = {
+          ...data,
+          hireDate: data.hireDate || undefined,
+        };
+        result = await createStaff(createData as any);
       }
 
       if (result.success) {

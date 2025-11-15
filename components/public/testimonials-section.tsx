@@ -2,49 +2,31 @@
 
 import { motion } from 'framer-motion';
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Quote } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Quote, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { getPublicReviews } from '@/actions/public-review.actions';
 
-const testimonials = [
-  {
-    id: 1,
-    name: 'Sarah Johnson',
-    title: 'Business Traveler',
-    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200',
-    quote:
-      'Absolutely wonderful experience! The staff was incredibly friendly and the room was spotless. Will definitely be returning on my next business trip.',
-  },
-  {
-    id: 2,
-    name: 'Michael Chen',
-    title: 'Vacation Guest',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200',
-    quote:
-      'The perfect getaway! Beautiful location, amazing amenities, and exceptional service. My family had an unforgettable vacation here.',
-  },
-  {
-    id: 3,
-    name: 'Emily Rodriguez',
-    title: 'Honeymoon Couple',
-    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200',
-    quote:
-      'Our honeymoon was magical thanks to this hotel. The romantic atmosphere and attention to detail made our stay truly special.',
-  },
-];
+interface TestimonialsSectionProps {
+  reviews: Awaited<ReturnType<typeof getPublicReviews>>['data'];
+}
 
-export function TestimonialsSection() {
+export function TestimonialsSection({ reviews }: TestimonialsSectionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const handlePrevious = () => {
-    setCurrentIndex((prev) => (prev === 0 ? testimonials.length - 1 : prev - 1));
+    setCurrentIndex((prev) => (prev === 0 ? reviews.length - 1 : prev - 1));
   };
 
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev === testimonials.length - 1 ? 0 : prev + 1));
+    setCurrentIndex((prev) => (prev === reviews.length - 1 ? 0 : prev + 1));
   };
 
-  const currentTestimonial = testimonials[currentIndex];
+  if (reviews.length === 0) {
+    return null;
+  }
+
+  const currentReview = reviews[currentIndex];
 
   return (
     <section className="py-16">
@@ -85,18 +67,31 @@ export function TestimonialsSection() {
             <Card>
               <CardContent className="p-8">
                 <Quote className="h-12 w-12 text-teal-600 mb-4" />
+                <div className="flex gap-1 mb-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-5 w-5 ${
+                        i < currentReview.rating
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  ))}
+                </div>
                 <p className="text-lg italic text-muted-foreground">
-                  "{currentTestimonial.quote}"
+                  "{currentReview.comment}"
                 </p>
                 <div className="mt-6 flex items-center gap-4">
-                  <div
-                    className="h-16 w-16 rounded-full bg-cover bg-center"
-                    style={{ backgroundImage: `url(${currentTestimonial.image})` }}
-                  />
+                  <div className="h-16 w-16 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white text-2xl font-bold">
+                    {currentReview.customer.name.charAt(0)}
+                  </div>
                   <div>
-                    <div className="font-semibold">{currentTestimonial.name}</div>
+                    <div className="font-semibold">
+                      {currentReview.customer.name}
+                    </div>
                     <div className="text-sm text-muted-foreground">
-                      {currentTestimonial.title}
+                      {currentReview.customer.location}
                     </div>
                   </div>
                 </div>
@@ -123,9 +118,8 @@ export function TestimonialsSection() {
           </Button>
         </div>
 
-        {/* Dots Indicator */}
         <div className="mt-6 flex justify-center gap-2">
-          {testimonials.map((_, index) => (
+          {reviews.map((_review: typeof reviews[0], index: number) => (
             <button
               key={index}
               onClick={() => setCurrentIndex(index)}
@@ -134,7 +128,7 @@ export function TestimonialsSection() {
                   ? 'bg-teal-600 w-8'
                   : 'bg-muted-foreground/30'
               }`}
-              aria-label={`Go to testimonial ${index + 1}`}
+              aria-label={`Go to review ${index + 1}`}
             />
           ))}
         </div>

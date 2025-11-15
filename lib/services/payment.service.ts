@@ -214,6 +214,35 @@ export async function handlePaymentSuccess(reference: string) {
       throw new Error(result.error || 'Failed to update payment status');
     }
 
+    // Send confirmation email
+    if (result.payment) {
+      const booking = await prisma.booking.findUnique({
+        where: { id: result.payment.bookingId },
+        include: {
+          customer: true,
+          room: true,
+        },
+      });
+
+      if (booking) {
+        // Import email service dynamically to avoid circular dependencies
+        const { sendBookingConfirmationEmail } = await import(
+          './email.service'
+        );
+
+        await sendBookingConfirmationEmail('foehemmanuel@gmail.com', {
+          bookingNumber: booking.bookingNumber,
+          customerName: `${booking.customer.firstName} ${booking.customer.lastName}`,
+          roomName: booking.room.name,
+          checkInDate: booking.checkInDate.toLocaleDateString(),
+          checkOutDate: booking.checkOutDate.toLocaleDateString(),
+          numberOfGuests: booking.numberOfGuests,
+          totalAmount: `$${Number(booking.totalAmount).toFixed(2)}`,
+          specialRequests: booking.specialRequests || '',
+        });
+      }
+    }
+
     return {
       success: true,
       payment: result.payment,

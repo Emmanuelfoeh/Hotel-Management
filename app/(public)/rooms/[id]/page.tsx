@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import {
@@ -19,45 +19,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { RoomImageCarousel } from '@/components/public/room-image-carousel';
 import { AvailabilityCalendar } from '@/components/public/availability-calendar';
+import { getPublicRoomById } from '@/actions/public-room.actions';
 
-// Mock data - in real app, this would come from API/database
-const roomData: Record<string, any> = {
-  '1': {
-    id: 1,
-    name: 'Grand Plaza Hotel',
-    location: 'Downtown, New York',
-    price: 250,
-    rating: 4.8,
-    reviews: 124,
-    capacity: 2,
-    type: 'Deluxe Room',
-    description:
-      'Experience luxury in the heart of downtown New York. Our Grand Plaza Hotel offers stunning city views, modern amenities, and exceptional service. Perfect for business travelers and tourists alike.',
-    images: [
-      'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070',
-      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=2070',
-      'https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=2070',
-      'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?q=80&w=2070',
-    ],
-    amenities: [
-      { icon: Wifi, label: 'Free WiFi' },
-      { icon: Car, label: 'Free Parking' },
-      { icon: Waves, label: 'Pool Access' },
-      { icon: Dumbbell, label: 'Fitness Center' },
-      { icon: UtensilsCrossed, label: 'Restaurant' },
-      { icon: Wind, label: 'Air Conditioning' },
-    ],
-    features: [
-      'King-size bed',
-      'City view',
-      'Work desk',
-      'Mini bar',
-      'Coffee maker',
-      'Safe',
-      'Flat-screen TV',
-      'Bathroom with shower',
-    ],
-  },
+// Default amenities mapping based on room amenities array
+const amenityIcons: Record<string, any> = {
+  WiFi: Wifi,
+  Parking: Car,
+  Pool: Waves,
+  Gym: Dumbbell,
+  Restaurant: UtensilsCrossed,
+  'Air Conditioning': Wind,
 };
 
 export default function RoomDetailsPage({
@@ -67,10 +38,31 @@ export default function RoomDetailsPage({
 }) {
   const router = useRouter();
   const { id } = use(params);
-  const room = roomData[id];
+  const [room, setRoom] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [selectedDates, setSelectedDates] = useState<
     { from: Date; to: Date } | undefined
   >();
+
+  useEffect(() => {
+    async function fetchRoom() {
+      setLoading(true);
+      const result = await getPublicRoomById(id);
+      if (result.success && result.data) {
+        setRoom(result.data);
+      }
+      setLoading(false);
+    }
+    fetchRoom();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <p className="text-lg text-muted-foreground">Loading room details...</p>
+      </div>
+    );
+  }
 
   if (!room) {
     return (
@@ -82,6 +74,13 @@ export default function RoomDetailsPage({
       </div>
     );
   }
+
+  // Map amenities to icons
+  const amenitiesWithIcons =
+    room.amenities?.map((amenity: string) => ({
+      icon: amenityIcons[amenity] || Wifi,
+      label: amenity,
+    })) || [];
 
   const handleBookNow = () => {
     const params = new URLSearchParams();
@@ -108,13 +107,11 @@ export default function RoomDetailsPage({
               <div className="mt-2 flex items-center gap-4 text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <MapPin className="h-4 w-4" />
-                  <span>{room.location}</span>
+                  <span>Room {room.roomNumber}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span>
-                    {room.rating} ({room.reviews} reviews)
-                  </span>
+                  <Users className="h-4 w-4" />
+                  <span>Up to {room.capacity} guests</span>
                 </div>
               </div>
             </div>
@@ -136,48 +133,43 @@ export default function RoomDetailsPage({
               <CardContent className="p-6">
                 <h2 className="text-2xl font-bold mb-4">About This Room</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  {room.description}
+                  {room.description ||
+                    'A comfortable and well-appointed room with modern amenities.'}
                 </p>
                 <div className="mt-4 flex items-center gap-4">
                   <div className="flex items-center gap-2">
                     <Users className="h-5 w-5 text-muted-foreground" />
                     <span>Up to {room.capacity} guests</span>
                   </div>
+                  {room.floor && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">
+                        Floor {room.floor}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
             {/* Amenities */}
-            <Card>
-              <CardContent className="p-6">
-                <h2 className="text-2xl font-bold mb-4">Amenities</h2>
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-                  {room.amenities.map((amenity: any, index: number) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <div className="rounded-full bg-teal-100 p-2 dark:bg-teal-900/30">
-                        <amenity.icon className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+            {amenitiesWithIcons.length > 0 && (
+              <Card>
+                <CardContent className="p-6">
+                  <h2 className="text-2xl font-bold mb-4">Amenities</h2>
+                  <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+                    {amenitiesWithIcons.map((amenity: any, index: number) => (
+                      <div key={index} className="flex items-center gap-3">
+                        <div className="rounded-full bg-teal-100 p-2 dark:bg-teal-900/30">
+                          <amenity.icon className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                        </div>
+                        <span className="text-sm">{amenity.label}</span>
                       </div>
-                      <span className="text-sm">{amenity.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Features */}
-            <Card>
-              <CardContent className="p-6">
-                <h2 className="text-2xl font-bold mb-4">Room Features</h2>
-                <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                  {room.features.map((feature: string, index: number) => (
-                    <li key={index} className="flex items-center gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-teal-600" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -190,7 +182,10 @@ export default function RoomDetailsPage({
                   <div className="text-sm text-muted-foreground">per night</div>
                 </div>
 
-                <AvailabilityCalendar onDateSelect={setSelectedDates} />
+                <AvailabilityCalendar
+                  onDateSelect={setSelectedDates}
+                  bookings={room.bookings}
+                />
 
                 <Button
                   onClick={handleBookNow}

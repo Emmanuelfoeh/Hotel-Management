@@ -4,29 +4,17 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import { getPublicRooms } from '@/actions/public-room.actions';
 
-const premiumStays = [
-  {
-    id: 1,
-    name: 'Luxury Beach Resort',
-    location: 'Maldives',
-    image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=2070',
-  },
-  {
-    id: 2,
-    name: 'Mountain View Hotel',
-    location: 'Swiss Alps',
-    image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?q=80&w=2070',
-  },
-  {
-    id: 3,
-    name: 'City Center Suite',
-    location: 'New York',
-    image: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=2070',
-  },
-];
+interface PremiumStaysSectionProps {
+  rooms: Awaited<ReturnType<typeof getPublicRooms>>['data'];
+}
 
-export function PremiumStaysSection() {
+export function PremiumStaysSection({ rooms }: PremiumStaysSectionProps) {
+  // Filter for premium rooms (SUITE, DELUXE, PRESIDENTIAL) and limit to 3
+  const premiumRooms = rooms
+    .filter((room) => ['SUITE', 'DELUXE', 'PRESIDENTIAL'].includes(room.type))
+    .slice(0, 3);
   return (
     <section className="py-12 sm:py-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -58,30 +46,45 @@ export function PremiumStaysSection() {
         </motion.div>
 
         <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
-          {premiumStays.map((stay, index) => (
-            <motion.div
-              key={stay.id}
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="group relative min-w-[280px] sm:min-w-[300px] flex-shrink-0 overflow-hidden rounded-lg md:min-w-[400px] touch-manipulation"
-            >
-              <Link href={`/rooms/${stay.id}`}>
-                <div className="relative h-[250px] sm:h-[300px] w-full">
-                  <div
-                    className="h-full w-full bg-cover bg-center transition-transform duration-300 group-hover:scale-110"
-                    style={{ backgroundImage: `url(${stay.image})` }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                  <div className="absolute bottom-0 left-0 p-4 sm:p-6 text-white">
-                    <h3 className="text-xl sm:text-2xl font-bold">{stay.name}</h3>
-                    <p className="mt-1 text-sm sm:text-base text-white/90">{stay.location}</p>
+          {premiumRooms.length > 0 ? (
+            premiumRooms.map((room, index) => (
+              <motion.div
+                key={room.id}
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="group relative min-w-[280px] sm:min-w-[300px] flex-shrink-0 overflow-hidden rounded-lg md:min-w-[400px] touch-manipulation"
+              >
+                <Link href={`/rooms/${room.id}`}>
+                  <div className="relative h-[250px] sm:h-[300px] w-full">
+                    <div
+                      className="h-full w-full bg-cover bg-center transition-transform duration-300 group-hover:scale-110"
+                      style={{
+                        backgroundImage: `url(${
+                          room.images?.[0] ||
+                          'https://images.unsplash.com/photo-1566665797739-1674de7a421a?q=80&w=2074'
+                        })`,
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <div className="absolute bottom-0 left-0 p-4 sm:p-6 text-white">
+                      <h3 className="text-xl sm:text-2xl font-bold">
+                        {room.name}
+                      </h3>
+                      <p className="mt-1 text-sm sm:text-base text-white/90">
+                        {room.type.replace('_', ' ')} • ${room.price}/night
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
+                </Link>
+              </motion.div>
+            ))
+          ) : (
+            <div className="w-full text-center py-8 text-muted-foreground">
+              No premium rooms available at the moment
+            </div>
+          )}
         </div>
 
         <div className="mt-6 flex justify-center md:hidden">

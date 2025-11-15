@@ -36,6 +36,15 @@ export async function createRoom(data: CreateRoomInput) {
     };
   } catch (error) {
     console.error('Failed to create room:', error);
+
+    // Handle Prisma unique constraint error
+    if (error instanceof Error && error.message.includes('Unique constraint')) {
+      return {
+        success: false,
+        error: `Room number "${data.roomNumber}" already exists. Please use a different room number.`,
+      };
+    }
+
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to create room',
@@ -69,6 +78,15 @@ export async function updateRoom(id: string, data: UpdateRoomInput) {
     };
   } catch (error) {
     console.error('Failed to update room:', error);
+
+    // Handle Prisma unique constraint error
+    if (error instanceof Error && error.message.includes('Unique constraint')) {
+      return {
+        success: false,
+        error: `Room number "${data.roomNumber}" already exists. Please use a different room number.`,
+      };
+    }
+
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to update room',

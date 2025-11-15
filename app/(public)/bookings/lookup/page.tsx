@@ -5,7 +5,16 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Search, Calendar, MapPin, Mail, Phone, User } from 'lucide-react';
+import {
+  Search,
+  Calendar,
+  MapPin,
+  Mail,
+  Phone,
+  User,
+  XCircle,
+  Download,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -19,6 +28,20 @@ import {
 import { Input } from '@/components/ui/input';
 import { useBookingLookup } from '@/hooks/use-booking';
 import { toast } from 'sonner';
+import { cancelPublicBooking } from '@/actions/public-booking.actions';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const lookupSchema = z.object({
   bookingNumber: z.string().min(1, 'Booking number is required').toUpperCase(),
@@ -29,6 +52,8 @@ type LookupFormData = z.infer<typeof lookupSchema>;
 
 export default function BookingLookupPage() {
   const [bookingData, setBookingData] = useState<any>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const bookingLookup = useBookingLookup();
 
   const form = useForm<LookupFormData>({
@@ -38,6 +63,210 @@ export default function BookingLookupPage() {
       email: '',
     },
   });
+
+  const handleDownloadPDF = () => {
+    if (!bookingData) return;
+
+    setIsGeneratingPDF(true);
+    try {
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const margin = 15;
+      let yPos = 20;
+
+      // Header
+      pdf.setFontSize(20);
+      pdf.setTextColor(20, 184, 166); // Teal color
+      pdf.text('Booking Confirmation', margin, yPos);
+
+      yPos += 10;
+      pdf.setFontSize(10);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`Booking Number: ${bookingData.bookingNumber}`, margin, yPos);
+
+      yPos += 5;
+      pdf.setFontSize(9);
+      pdf.text(
+        `Status: ${bookingData.bookingStatus.replace('_', ' ')}`,
+        margin,
+        yPos
+      );
+
+      yPos += 10;
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(margin, yPos, pageWidth - margin, yPos);
+
+      yPos += 10;
+
+      // Room Information
+      pdf.setFontSize(14);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('Room Information', margin, yPos);
+      yPos += 8;
+
+      autoTable(pdf, {
+        startY: yPos,
+        head: [],
+        body: [
+          ['Room Name', bookingData.room.name],
+          ['Room Number', bookingData.room.roomNumber],
+          ['Room Type', bookingData.room.type],
+        ],
+        theme: 'plain',
+        styles: { fontSize: 10, cellPadding: 3 },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 50 },
+          1: { cellWidth: 'auto' },
+        },
+        margin: { left: margin },
+      });
+
+      yPos = (pdf as any).lastAutoTable.finalY + 10;
+
+      // Booking Details
+      pdf.setFontSize(14);
+      pdf.text('Booking Details', margin, yPos);
+      yPos += 8;
+
+      autoTable(pdf, {
+        startY: yPos,
+        head: [],
+        body: [
+          [
+            'Check-in',
+            new Date(bookingData.checkInDate).toLocaleDateString('en-US', {
+              weekday: 'short',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            }),
+          ],
+          [
+            'Check-out',
+            new Date(bookingData.checkOutDate).toLocaleDateString('en-US', {
+              weekday: 'short',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            }),
+          ],
+          ['Number of Guests', bookingData.numberOfGuests.toString()],
+          ...(bookingData.specialRequests
+            ? [['Special Requests', bookingData.specialRequests]]
+            : []),
+        ],
+        theme: 'plain',
+        styles: { fontSize: 10, cellPadding: 3 },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 50 },
+          1: { cellWidth: 'auto' },
+        },
+        margin: { left: margin },
+      });
+
+      yPos = (pdf as any).lastAutoTable.finalY + 10;
+
+      // Guest Information
+      pdf.setFontSize(14);
+      pdf.text('Guest Information', margin, yPos);
+      yPos += 8;
+
+      autoTable(pdf, {
+        startY: yPos,
+        head: [],
+        body: [
+          [
+            'Name',
+            `${bookingData.customer.firstName} ${bookingData.customer.lastName}`,
+          ],
+          ['Email', bookingData.customer.email],
+          ['Phone', bookingData.customer.phone],
+        ],
+        theme: 'plain',
+        styles: { fontSize: 10, cellPadding: 3 },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 50 },
+          1: { cellWidth: 'auto' },
+        },
+        margin: { left: margin },
+      });
+
+      yPos = (pdf as any).lastAutoTable.finalY + 10;
+
+      // Payment Information
+      pdf.setFontSize(14);
+      pdf.text('Payment Information', margin, yPos);
+      yPos += 8;
+
+      autoTable(pdf, {
+        startY: yPos,
+        head: [],
+        body: [
+          ['Total Amount', `$${Number(bookingData.totalAmount).toFixed(2)}`],
+          ['Payment Status', bookingData.paymentStatus],
+        ],
+        theme: 'plain',
+        styles: { fontSize: 10, cellPadding: 3 },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 50 },
+          1: { cellWidth: 'auto' },
+        },
+        margin: { left: margin },
+      });
+
+      // Footer
+      const finalY = (pdf as any).lastAutoTable.finalY + 20;
+      pdf.setFontSize(8);
+      pdf.setTextColor(150, 150, 150);
+      pdf.text(
+        'Thank you for choosing our hotel. We look forward to welcoming you!',
+        pageWidth / 2,
+        finalY,
+        { align: 'center' }
+      );
+
+      pdf.save(`booking-${bookingData.bookingNumber}.pdf`);
+
+      toast.success('PDF downloaded successfully');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
+  const handleCancelBooking = async () => {
+    if (!bookingData) return;
+
+    setIsCancelling(true);
+    try {
+      const result = await cancelPublicBooking(
+        bookingData.bookingNumber,
+        bookingData.customer.email
+      );
+
+      if (result.success) {
+        toast.success('Booking cancelled successfully');
+        // Refresh the booking data
+        setBookingData({
+          ...bookingData,
+          bookingStatus: 'CANCELLED',
+        });
+      } else {
+        toast.error(result.error || 'Failed to cancel booking');
+      }
+    } catch (error) {
+      toast.error('An error occurred while cancelling the booking');
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   const onSubmit = async (data: LookupFormData) => {
     bookingLookup.mutate(data, {
@@ -287,23 +516,64 @@ export default function BookingLookupPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => window.print()}
-                    className="flex-1"
-                  >
-                    Print Details
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setBookingData(null);
-                      form.reset();
-                    }}
-                    className="flex-1 bg-teal-600 hover:bg-teal-700"
-                  >
-                    New Search
-                  </Button>
+                <div className="flex flex-col gap-3">
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={handleDownloadPDF}
+                      disabled={isGeneratingPDF}
+                      className="flex-1"
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setBookingData(null);
+                        form.reset();
+                      }}
+                      className="flex-1 bg-teal-600 hover:bg-teal-700"
+                    >
+                      New Search
+                    </Button>
+                  </div>
+
+                  {/* Cancel Booking Button - Only show if booking can be cancelled */}
+                  {bookingData.bookingStatus === 'CONFIRMED' && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          className="w-full"
+                          disabled={isCancelling}
+                        >
+                          <XCircle className="mr-2 h-4 w-4" />
+                          Cancel Booking
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Cancel Booking?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to cancel this booking? This
+                            action cannot be undone. You will receive a
+                            cancellation confirmation email.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>
+                            No, Keep Booking
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleCancelBooking}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Yes, Cancel Booking
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
               </CardContent>
             </Card>

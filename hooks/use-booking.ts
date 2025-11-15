@@ -41,6 +41,19 @@ export interface BookingLookupResponse {
   error?: string;
 }
 
+export interface BookingByReferenceResponse {
+  success: boolean;
+  booking?: any; // Full booking with room, customer, and payments
+  payment?: any; // Payment details
+  error?: string;
+}
+
+export interface ResendConfirmationResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
 // API Functions
 const bookingApi = {
   create: async (data: CreateBookingInput): Promise<BookingResponse> => {
@@ -51,14 +64,23 @@ const bookingApi = {
     return apiClient.post<BookingLookupResponse>('/api/bookings/lookup', data);
   },
 
-  getByReference: async (reference: string) => {
-    return apiClient.get(`/api/bookings/reference/${reference}`);
+  getByReference: async (
+    reference: string
+  ): Promise<BookingByReferenceResponse> => {
+    return apiClient.get<BookingByReferenceResponse>(
+      `/api/bookings/reference/${reference}`
+    );
   },
 
-  resendConfirmation: async (bookingNumber: string) => {
-    return apiClient.post('/api/bookings/resend-confirmation', {
-      bookingNumber,
-    });
+  resendConfirmation: async (
+    bookingNumber: string
+  ): Promise<ResendConfirmationResponse> => {
+    return apiClient.post<ResendConfirmationResponse>(
+      '/api/bookings/resend-confirmation',
+      {
+        bookingNumber,
+      }
+    );
   },
 };
 

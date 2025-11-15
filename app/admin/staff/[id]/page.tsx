@@ -9,9 +9,9 @@ import { EditIcon } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface StaffDetailsPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 const roleColors = {
@@ -35,7 +35,8 @@ export default async function StaffDetailsPage({
   // Only managers can view staff details
   await requireRole(['MANAGER']);
 
-  const staff = await staffService.getStaffById(params.id);
+  const { id } = await params;
+  const staff = await staffService.getStaffById(id);
 
   if (!staff) {
     notFound();

@@ -4,16 +4,17 @@ import { requireRole } from '@/lib/utils/auth-helpers';
 import { StaffForm } from '@/components/admin/forms/staff-form';
 
 interface EditStaffPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function EditStaffPage({ params }: EditStaffPageProps) {
   // Only managers can edit staff
   await requireRole(['MANAGER']);
 
-  const staff = await staffService.getStaffById(params.id);
+  const { id } = await params;
+  const staff = await staffService.getStaffById(id);
 
   if (!staff) {
     notFound();

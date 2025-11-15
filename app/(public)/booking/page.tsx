@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useCreateBooking } from '@/hooks/use-booking';
 import { toast } from 'sonner';
+import { getPublicRoomById } from '@/actions/public-room.actions';
 
 const bookingSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -42,9 +43,11 @@ function BookingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
+  const [roomData, setRoomData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const createBooking = useCreateBooking();
 
-  const roomId = searchParams.get('roomId') || 'default-room-id';
+  const roomId = searchParams.get('roomId');
   const checkIn = searchParams.get('checkIn');
   const checkOut = searchParams.get('checkOut');
   const guests = parseInt(searchParams.get('guests') || '2');
@@ -61,13 +64,42 @@ function BookingPageContent() {
     },
   });
 
-  // Mock room data - TODO: Fetch from API
-  const roomData = {
-    name: 'Grand Plaza Hotel',
-    price: 250,
-    image:
-      'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070',
-  };
+  // Fetch room data
+  useEffect(() => {
+    async function fetchRoom() {
+      if (!roomId) {
+        router.push('/rooms');
+        return;
+      }
+
+      setLoading(true);
+      const result = await getPublicRoomById(roomId);
+      if (result.success && result.data) {
+        setRoomData(result.data);
+      } else {
+        toast.error('Room not found');
+        router.push('/rooms');
+      }
+      setLoading(false);
+    }
+    fetchRoom();
+  }, [roomId, router]);
+
+  // Redirect if required params are missing
+  if (!roomId || !checkIn || !checkOut) {
+    router.push('/rooms');
+    return null;
+  }
+
+  if (loading || !roomData) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <p className="text-lg text-muted-foreground">
+          Loading booking details...
+        </p>
+      </div>
+    );
+  }
 
   const calculateNights = () => {
     if (!checkIn || !checkOut) return 1;
@@ -100,6 +132,12 @@ function BookingPageContent() {
   };
 
   const onSubmit = async (data: BookingFormData) => {
+    if (!roomId) {
+      toast.error('Room information is missing');
+      router.push('/rooms');
+      return;
+    }
+
     if (!checkIn || !checkOut) {
       toast.error('Please select check-in and check-out dates');
       return;
@@ -385,7 +423,10 @@ function BookingPageContent() {
               <CardContent className="space-y-4">
                 <div className="aspect-video w-full overflow-hidden rounded-lg">
                   <img
-                    src={roomData.image}
+                    src={
+                      roomData.images?.[0] ||
+                      'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070'
+                    }
                     alt={roomData.name}
                     className="h-full w-full object-cover"
                   />
@@ -393,12 +434,18 @@ function BookingPageContent() {
 
                 <div>
                   <h3 className="font-semibold">{roomData.name}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Room {roomData.roomNumber} • {roomData.type}
+                  </p>
                   {checkIn && checkOut && (
                     <p className="text-sm text-muted-foreground mt-1">
                       {new Date(checkIn).toLocaleDateString()} -{' '}
                       {new Date(checkOut).toLocaleDateString()}
                     </p>
                   )}
+                  <p className="text-sm text-muted-foreground">
+                    {guests} guest{guests > 1 ? 's' : ''}
+                  </p>
                 </div>
 
                 <div className="space-y-2 border-t pt-4">

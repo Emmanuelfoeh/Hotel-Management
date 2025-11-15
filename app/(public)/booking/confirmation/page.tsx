@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, Suspense } from 'react';
+import { useEffect, Suspense, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
@@ -16,17 +16,26 @@ import { Card, CardContent } from '@/components/ui/card';
 import {
   useBookingByReference,
   useResendConfirmation,
+  BookingByReferenceResponse,
+  ResendConfirmationResponse,
 } from '@/hooks/use-booking';
 import { verifyPaymentAction } from '@/actions/payment.actions';
 import { toast } from 'sonner';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 function BookingConfirmationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const reference = searchParams.get('reference');
   const resendConfirmation = useResendConfirmation();
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
-  const { data, isLoading, error } = useBookingByReference(reference);
+  const { data, isLoading, error } = useBookingByReference(reference) as {
+    data: BookingByReferenceResponse | undefined;
+    isLoading: boolean;
+    error: any;
+  };
 
   useEffect(() => {
     if (!reference) {
@@ -45,11 +54,187 @@ function BookingConfirmationContent() {
     verifyPayment();
   }, [reference, router]);
 
+  const handleDownloadReceipt = () => {
+    if (!data?.booking) return;
+
+    setIsGeneratingPDF(true);
+    try {
+      const booking = data.booking;
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const margin = 15;
+      let yPos = 20;
+
+      // Header
+      pdf.setFontSize(20);
+      pdf.setTextColor(20, 184, 166);
+      pdf.text('Payment Receipt', margin, yPos);
+
+      yPos += 10;
+      pdf.setFontSize(10);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`Booking Number: ${booking.bookingNumber}`, margin, yPos);
+
+      yPos += 5;
+      pdf.setFontSize(9);
+      pdf.text(`Payment Status: PAID`, margin, yPos);
+
+      yPos += 10;
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(margin, yPos, pageWidth - margin, yPos);
+
+      yPos += 10;
+
+      // Room Information
+      pdf.setFontSize(14);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('Room Information', margin, yPos);
+      yPos += 8;
+
+      autoTable(pdf, {
+        startY: yPos,
+        head: [],
+        body: [
+          ['Room Name', booking.room.name],
+          ['Room Number', booking.room.roomNumber],
+        ],
+        theme: 'plain',
+        styles: { fontSize: 10, cellPadding: 3 },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 50 },
+          1: { cellWidth: 'auto' },
+        },
+        margin: { left: margin },
+      });
+
+      yPos = (pdf as any).lastAutoTable.finalY + 10;
+
+      // Booking Details
+      pdf.setFontSize(14);
+      pdf.text('Booking Details', margin, yPos);
+      yPos += 8;
+
+      autoTable(pdf, {
+        startY: yPos,
+        head: [],
+        body: [
+          [
+            'Check-in',
+            new Date(booking.checkInDate).toLocaleDateString('en-US', {
+              weekday: 'short',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            }),
+          ],
+          [
+            'Check-out',
+            new Date(booking.checkOutDate).toLocaleDateString('en-US', {
+              weekday: 'short',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            }),
+          ],
+          ['Number of Guests', booking.numberOfGuests.toString()],
+        ],
+        theme: 'plain',
+        styles: { fontSize: 10, cellPadding: 3 },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 50 },
+          1: { cellWidth: 'auto' },
+        },
+        margin: { left: margin },
+      });
+
+      yPos = (pdf as any).lastAutoTable.finalY + 10;
+
+      // Guest Information
+      pdf.setFontSize(14);
+      pdf.text('Guest Information', margin, yPos);
+      yPos += 8;
+
+      autoTable(pdf, {
+        startY: yPos,
+        head: [],
+        body: [
+          [
+            'Name',
+            `${booking.customer.firstName} ${booking.customer.lastName}`,
+          ],
+          ['Email', booking.customer.email],
+          ['Phone', booking.customer.phone],
+        ],
+        theme: 'plain',
+        styles: { fontSize: 10, cellPadding: 3 },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 50 },
+          1: { cellWidth: 'auto' },
+        },
+        margin: { left: margin },
+      });
+
+      yPos = (pdf as any).lastAutoTable.finalY + 10;
+
+      // Payment Summary
+      pdf.setFontSize(14);
+      pdf.text('Payment Summary', margin, yPos);
+      yPos += 8;
+
+      autoTable(pdf, {
+        startY: yPos,
+        head: [],
+        body: [
+          ['Total Amount', `$${Number(booking.totalAmount).toFixed(2)}`],
+          ['Payment Status', 'PAID'],
+          [
+            'Payment Date',
+            data.payment?.paidAt
+              ? new Date(data.payment.paidAt).toLocaleDateString()
+              : 'N/A',
+          ],
+        ],
+        theme: 'plain',
+        styles: { fontSize: 10, cellPadding: 3 },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 50 },
+          1: { cellWidth: 'auto' },
+        },
+        margin: { left: margin },
+      });
+
+      // Footer
+      const finalY = (pdf as any).lastAutoTable.finalY + 20;
+      pdf.setFontSize(8);
+      pdf.setTextColor(150, 150, 150);
+      pdf.text(
+        'Thank you for your payment. This is your official receipt.',
+        pageWidth / 2,
+        finalY,
+        { align: 'center' }
+      );
+
+      pdf.save(`receipt-${booking.bookingNumber}.pdf`);
+
+      toast.success('Receipt downloaded successfully');
+    } catch (error) {
+      console.error('Error generating receipt:', error);
+      toast.error('Failed to generate receipt. Please try again.');
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   const handleResendEmail = async () => {
     if (!data?.booking?.bookingNumber) return;
 
     resendConfirmation.mutate(data.booking.bookingNumber, {
-      onSuccess: (response) => {
+      onSuccess: (response: ResendConfirmationResponse) => {
         if (response.success) {
           toast.success('Confirmation email sent successfully!');
         } else {
@@ -227,11 +412,12 @@ function BookingConfirmationContent() {
           <Button
             variant="outline"
             size="lg"
-            onClick={() => window.print()}
+            onClick={handleDownloadReceipt}
+            disabled={isGeneratingPDF}
             className="gap-2"
           >
             <Download className="h-5 w-5" />
-            Download Receipt
+            {isGeneratingPDF ? 'Generating...' : 'Download Receipt'}
           </Button>
           <Button
             variant="outline"

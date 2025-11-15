@@ -307,6 +307,10 @@ export class BookingService {
   async cancelBooking(id: string) {
     const booking = await prisma.booking.findUnique({
       where: { id },
+      include: {
+        room: true,
+        customer: true,
+      },
     });
 
     if (!booking) {
@@ -317,7 +321,7 @@ export class BookingService {
       throw new Error('Cannot cancel a checked-out booking');
     }
 
-    return await prisma.booking.update({
+    const cancelledBooking = await prisma.booking.update({
       where: { id },
       data: {
         bookingStatus: 'CANCELLED',
@@ -327,6 +331,24 @@ export class BookingService {
         customer: true,
       },
     });
+
+    // Send cancellation email
+    try {
+      const { sendBookingCancellationEmail } = await import('./email.service');
+      await sendBookingCancellationEmail('foehemmanuel@gmail.com', {
+        bookingNumber: cancelledBooking.bookingNumber,
+        customerName: `${cancelledBooking.customer.firstName} ${cancelledBooking.customer.lastName}`,
+        roomName: cancelledBooking.room.name,
+        checkInDate: cancelledBooking.checkInDate.toLocaleDateString(),
+        checkOutDate: cancelledBooking.checkOutDate.toLocaleDateString(),
+        cancellationDate: new Date().toLocaleDateString(),
+      });
+    } catch (emailError) {
+      console.error('Failed to send cancellation email:', emailError);
+      // Don't throw error - cancellation should succeed even if email fails
+    }
+
+    return cancelledBooking;
   }
 
   /**
@@ -335,7 +357,7 @@ export class BookingService {
   async checkIn(id: string) {
     const booking = await prisma.booking.findUnique({
       where: { id },
-      include: { room: true },
+      include: { room: true, customer: true },
     });
 
     if (!booking) {
@@ -347,7 +369,7 @@ export class BookingService {
     }
 
     // Update booking and room status in a transaction
-    return await prisma.$transaction(async (tx) => {
+    const checkedInBooking = await prisma.$transaction(async (tx) => {
       const updatedBooking = await tx.booking.update({
         where: { id },
         data: {
@@ -368,6 +390,25 @@ export class BookingService {
 
       return updatedBooking;
     });
+
+    // Send check-in welcome email
+    try {
+      const { sendCheckInWelcomeEmail } = await import('./email.service');
+      await sendCheckInWelcomeEmail(checkedInBooking.customer.email, {
+        bookingNumber: checkedInBooking.bookingNumber,
+        customerName: `${checkedInBooking.customer.firstName} ${checkedInBooking.customer.lastName}`,
+        roomName: checkedInBooking.room.name,
+        roomNumber: checkedInBooking.room.roomNumber,
+        checkInDate: checkedInBooking.checkInDate.toLocaleDateString(),
+        checkOutDate: checkedInBooking.checkOutDate.toLocaleDateString(),
+        wifiPassword: 'GuestWiFi2024', // You can make this configurable
+      });
+    } catch (emailError) {
+      console.error('Failed to send check-in welcome email:', emailError);
+      // Don't throw error - check-in should succeed even if email fails
+    }
+
+    return checkedInBooking;
   }
 
   /**

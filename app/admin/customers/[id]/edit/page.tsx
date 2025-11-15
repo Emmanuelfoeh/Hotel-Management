@@ -16,11 +16,12 @@ async function getCustomer(id: string) {
 export default async function EditCustomerPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   await requireAuth();
 
-  const customer = await getCustomer(params.id);
+  const { id } = await params;
+  const customer = await getCustomer(id);
 
   return (
     <div className="space-y-6">

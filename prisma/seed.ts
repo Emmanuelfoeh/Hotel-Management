@@ -561,7 +561,7 @@ async function main() {
       roomId: rooms[1].id, // Modern Single Room
       customerId: customers[4].id,
       checkInDate: lastWeek,
-      checkOutDate: lastWeek.getTime() + 3 * 24 * 60 * 60 * 1000,
+      checkOutDate: new Date(lastWeek.getTime() + 3 * 24 * 60 * 60 * 1000),
       numberOfGuests: 1,
       totalAmount: 299.97,
       paymentStatus: 'PAID',
@@ -780,6 +780,65 @@ async function main() {
 
   console.log('✅ Created 6 activity log entries');
 
+  // Create Reviews
+  console.log('⭐ Creating reviews...');
+  await Promise.all([
+    prisma.review.create({
+      data: {
+        customerId: customers[0].id,
+        bookingId: booking5.id,
+        rating: 5,
+        comment:
+          'Absolutely wonderful experience! The staff was incredibly friendly and the room was spotless. Will definitely be returning on my next business trip.',
+        isApproved: true,
+        createdAt: new Date(lastWeek.getTime() + 4 * 24 * 60 * 60 * 1000),
+      },
+    }),
+    prisma.review.create({
+      data: {
+        customerId: customers[1].id,
+        bookingId: booking1.id,
+        rating: 5,
+        comment:
+          'The perfect getaway! Beautiful location, amazing amenities, and exceptional service. My family had an unforgettable vacation here.',
+        isApproved: true,
+        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+      },
+    }),
+    prisma.review.create({
+      data: {
+        customerId: customers[2].id,
+        rating: 5,
+        comment:
+          'Our honeymoon was magical thanks to this hotel. The romantic atmosphere and attention to detail made our stay truly special.',
+        isApproved: true,
+        createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+      },
+    }),
+    prisma.review.create({
+      data: {
+        customerId: customers[3].id,
+        rating: 4,
+        comment:
+          'Great hotel with excellent service. The room was clean and comfortable. Only minor issue was the Wi-Fi speed, but overall a fantastic stay!',
+        isApproved: true,
+        createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
+      },
+    }),
+    prisma.review.create({
+      data: {
+        customerId: customers[5].id,
+        rating: 5,
+        comment:
+          'Exceeded all expectations! The presidential suite was luxurious, the spa was incredible, and the restaurant served amazing food. Highly recommend!',
+        isApproved: true,
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      },
+    }),
+  ]);
+
+  console.log('✅ Created 5 approved reviews');
+
   console.log('\n🎉 Database seeding completed successfully!');
   console.log('\n📊 Summary:');
   console.log(`   - Staff: 5 (1 Manager, 2 Receptionists, 2 Cleaners)`);
@@ -788,6 +847,7 @@ async function main() {
   console.log(`   - Bookings: 8 (various statuses)`);
   console.log(`   - Payments: 7`);
   console.log(`   - Activity Logs: 6`);
+  console.log(`   - Reviews: 5 (all approved)`);
   console.log('\n🔑 Admin Login Credentials:');
   console.log('   Email: admin@hotel.com');
   console.log('   Password: password123');

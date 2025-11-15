@@ -41,12 +41,13 @@ async function getCustomerStats(id: string) {
 export default async function CustomerDetailsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   await requireAuth();
 
-  const customer = await getCustomer(params.id);
-  const stats = await getCustomerStats(params.id);
+  const { id } = await params;
+  const customer = await getCustomer(id);
+  const stats = await getCustomerStats(id);
 
   const getBookingStatusBadge = (status: BookingStatus) => {
     const variants: Record<

@@ -29,9 +29,10 @@ async function getBooking(id: string) {
 export default async function BookingDetailsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const booking = await getBooking(params.id);
+  const { id } = await params;
+  const booking = await getBooking(id);
 
   const getBookingStatusBadge = (status: BookingStatus) => {
     const variants: Record<

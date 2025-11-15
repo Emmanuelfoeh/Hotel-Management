@@ -8,3 +8,4 @@ export * from './report.service';
 export * from './payment.service';
 export * from './email.service';
 export * from './activity-log.service';
+export * from './review.service';

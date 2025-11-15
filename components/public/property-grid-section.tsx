@@ -4,91 +4,21 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { PropertyCard } from './property-card';
+import { getPublicRooms } from '@/actions/public-room.actions';
 
-const filterTabs = ['All', 'Hotels', 'Resorts', 'Villas', 'Apartments'];
+const filterTabs = ['All', 'Single', 'Double', 'Suite', 'Deluxe', 'Presidential'];
 
-const properties = [
-  {
-    id: 1,
-    name: 'Grand Plaza Hotel',
-    location: 'Downtown, New York',
-    price: 250,
-    rating: 4.8,
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=2070',
-    type: 'Hotels',
-  },
-  {
-    id: 2,
-    name: 'Sunset Beach Resort',
-    location: 'Miami Beach, Florida',
-    price: 350,
-    rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=2070',
-    type: 'Resorts',
-  },
-  {
-    id: 3,
-    name: 'Mountain View Villa',
-    location: 'Aspen, Colorado',
-    price: 500,
-    rating: 5.0,
-    image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2071',
-    type: 'Villas',
-  },
-  {
-    id: 4,
-    name: 'City Center Apartment',
-    location: 'San Francisco, CA',
-    price: 180,
-    rating: 4.6,
-    image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=2070',
-    type: 'Apartments',
-  },
-  {
-    id: 5,
-    name: 'Luxury Boutique Hotel',
-    location: 'Paris, France',
-    price: 400,
-    rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=2070',
-    type: 'Hotels',
-  },
-  {
-    id: 6,
-    name: 'Tropical Paradise Resort',
-    location: 'Bali, Indonesia',
-    price: 320,
-    rating: 4.8,
-    image: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?q=80&w=2080',
-    type: 'Resorts',
-  },
-  {
-    id: 7,
-    name: 'Countryside Villa',
-    location: 'Tuscany, Italy',
-    price: 450,
-    rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?q=80&w=2070',
-    type: 'Villas',
-  },
-  {
-    id: 8,
-    name: 'Modern Loft Apartment',
-    location: 'London, UK',
-    price: 220,
-    rating: 4.7,
-    image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=2080',
-    type: 'Apartments',
-  },
-];
+interface PropertyGridSectionProps {
+  rooms: Awaited<ReturnType<typeof getPublicRooms>>['data'];
+}
 
-export function PropertyGridSection() {
+export function PropertyGridSection({ rooms }: PropertyGridSectionProps) {
   const [activeFilter, setActiveFilter] = useState('All');
 
-  const filteredProperties =
+  const filteredRooms =
     activeFilter === 'All'
-      ? properties
-      : properties.filter((p) => p.type === activeFilter);
+      ? rooms
+      : rooms.filter((room) => room.type.toLowerCase() === activeFilter.toLowerCase());
 
   return (
     <section className="py-16 bg-muted/30">
@@ -128,17 +58,23 @@ export function PropertyGridSection() {
 
         {/* Property Grid */}
         <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredProperties.map((property, index) => (
-            <motion.div
-              key={property.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.05 }}
-            >
-              <PropertyCard property={property} />
-            </motion.div>
-          ))}
+          {filteredRooms.length > 0 ? (
+            filteredRooms.map((room, index) => (
+              <motion.div
+                key={room.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: index * 0.05 }}
+              >
+                <PropertyCard property={room} />
+              </motion.div>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12 text-muted-foreground">
+              No rooms available in this category
+            </div>
+          )}
         </div>
       </div>
     </section>

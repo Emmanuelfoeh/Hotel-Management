@@ -128,9 +128,23 @@ export async function getBookingByNumberAndEmail(
       };
     }
 
+    // Serialize Decimal fields to numbers
+    const serializedBooking = {
+      ...booking,
+      totalAmount: Number(booking.totalAmount),
+      room: {
+        ...booking.room,
+        price: Number(booking.room.price),
+      },
+      payments: booking.payments.map((p) => ({
+        ...p,
+        amount: Number(p.amount),
+      })),
+    };
+
     return {
       success: true,
-      booking,
+      booking: serializedBooking,
     };
   } catch (error) {
     console.error('Error fetching booking:', error);
@@ -166,10 +180,30 @@ export async function getBookingByReference(reference: string) {
       };
     }
 
+    // Serialize Decimal fields to numbers
+    const serializedBooking = {
+      ...payment.booking,
+      totalAmount: Number(payment.booking.totalAmount),
+      room: {
+        ...payment.booking.room,
+        price: Number(payment.booking.room.price),
+      },
+      payments: payment.booking.payments.map((p) => ({
+        ...p,
+        amount: Number(p.amount),
+      })),
+    };
+
+    const serializedPayment = {
+      ...payment,
+      amount: Number(payment.amount),
+      booking: undefined, // Remove to avoid duplication
+    };
+
     return {
       success: true,
-      booking: payment.booking,
-      payment,
+      booking: serializedBooking,
+      payment: serializedPayment,
     };
   } catch (error) {
     console.error('Error fetching booking by reference:', error);
@@ -214,6 +248,74 @@ export async function resendBookingConfirmation(bookingNumber: string) {
     return {
       success: false,
       error: 'Failed to resend confirmation email',
+    };
+  }
+}
+
+/**
+ * Cancel a booking by booking number and email (for public customers)
+ */
+export async function cancelPublicBooking(
+  bookingNumber: string,
+  email: string
+) {
+  try {
+    // Find the booking
+    const booking = await prisma.booking.findFirst({
+      where: {
+        bookingNumber: bookingNumber.toUpperCase(),
+        customer: {
+          email: email.toLowerCase(),
+        },
+      },
+      include: {
+        room: true,
+        customer: true,
+      },
+    });
+
+    if (!booking) {
+      return {
+        success: false,
+        error: 'Booking not found or email does not match',
+      };
+    }
+
+    // Check if booking can be cancelled
+    if (booking.bookingStatus === 'CANCELLED') {
+      return {
+        success: false,
+        error: 'This booking has already been cancelled',
+      };
+    }
+
+    if (booking.bookingStatus === 'CHECKED_OUT') {
+      return {
+        success: false,
+        error: 'Cannot cancel a completed booking',
+      };
+    }
+
+    if (booking.bookingStatus === 'CHECKED_IN') {
+      return {
+        success: false,
+        error:
+          'Cannot cancel a booking that is currently checked in. Please contact the hotel.',
+      };
+    }
+
+    // Cancel the booking
+    await bookingService.cancelBooking(booking.id);
+
+    return {
+      success: true,
+      message: 'Booking cancelled successfully',
+    };
+  } catch (error) {
+    console.error('Error cancelling booking:', error);
+    return {
+      success: false,
+      error: 'Failed to cancel booking',
     };
   }
 }

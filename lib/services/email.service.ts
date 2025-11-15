@@ -1,8 +1,7 @@
 import { Resend } from 'resend';
 import { env } from '@/lib/env';
-import { kill } from 'process';
 
-const resend = new Resend('kill');
+const resend = new Resend(env.RESEND_API_KEY);
 
 interface EmailOptions {
   to: string;
@@ -572,6 +571,7 @@ export async function sendBookingConfirmationEmail(
   data: BookingConfirmationData
 ) {
   const html = renderBookingConfirmationEmail(data);
+  to = 'foehemmanuel@gmail.com';
   return sendEmail({
     to,
     subject: `Booking Confirmation - ${data.bookingNumber}`,
@@ -587,6 +587,7 @@ export async function sendBookingCancellationEmail(
   data: BookingCancellationData
 ) {
   const html = renderBookingCancellationEmail(data);
+  to = 'foehemmanuel@gmail.com';
   return sendEmail({
     to,
     subject: `Booking Cancellation - ${data.bookingNumber}`,
@@ -602,6 +603,7 @@ export async function sendCheckInWelcomeEmail(
   data: CheckInWelcomeData
 ) {
   const html = renderCheckInWelcomeEmail(data);
+  to = 'foehemmanuel@gmail.com';
   return sendEmail({
     to,
     subject: `Welcome to Our Hotel - ${data.bookingNumber}`,

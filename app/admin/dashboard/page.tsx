@@ -2,6 +2,8 @@ import { StatsCard } from '@/components/admin/stats-card';
 import { getDashboardStats } from '@/actions/analytics.actions';
 import { DashboardCharts } from '@/components/admin/charts';
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   const result = await getDashboardStats();
 

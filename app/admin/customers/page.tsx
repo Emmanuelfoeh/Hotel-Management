@@ -3,6 +3,8 @@ import { CustomersTable } from '@/components/admin/tables/customers-table';
 import { customerService } from '@/lib/services';
 import { requireAuth } from '@/lib/utils/auth-helpers';
 
+export const dynamic = 'force-dynamic';
+
 interface CustomersPageProps {
   searchParams: {
     query?: string;

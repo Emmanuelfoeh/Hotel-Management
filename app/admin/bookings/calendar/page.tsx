@@ -6,6 +6,9 @@ import { CalendarView } from '@/components/admin/calendar-view';
 import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { bookingService } from '@/lib/services/booking.service';
 
+// Force dynamic rendering to avoid database queries during build
+export const dynamic = 'force-dynamic';
+
 async function getCalendarEvents() {
   const events = await bookingService.getCalendarEvents();
   return events;

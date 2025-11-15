@@ -7,6 +7,8 @@ import { PlusIcon } from 'lucide-react';
 import Link from 'next/link';
 import { RoomSearchFilters } from '@/lib/services/room.service';
 
+export const dynamic = 'force-dynamic';
+
 interface RoomsPageProps {
   searchParams: Promise<{
     query?: string;

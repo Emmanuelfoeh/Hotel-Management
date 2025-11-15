@@ -7,6 +7,8 @@ import { LoadingSpinner } from '@/components/shared/loading-spinner';
 import { bookingService } from '@/lib/services/booking.service';
 import { BookingStatus, PaymentStatus } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 interface SearchParams {
   query?: string;
   status?: BookingStatus;

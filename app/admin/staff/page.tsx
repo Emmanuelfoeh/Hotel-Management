@@ -3,6 +3,8 @@ import { StaffTable } from '@/components/admin/tables/staff-table';
 import { staffService } from '@/lib/services';
 import { requireRole } from '@/lib/utils/auth-helpers';
 
+export const dynamic = 'force-dynamic';
+
 interface StaffPageProps {
   searchParams: {
     query?: string;

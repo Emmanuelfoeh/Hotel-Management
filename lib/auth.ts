@@ -51,39 +51,44 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Email and password are required');
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            return null;
+          }
+
+          const staff = await prisma.staff.findUnique({
+            where: { email: credentials.email as string },
+          });
+
+          if (!staff) {
+            return null;
+          }
+
+          if (!staff.isActive) {
+            return null;
+          }
+
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password as string,
+            staff.password
+          );
+
+          if (!isPasswordValid) {
+            return null;
+          }
+
+          return {
+            id: staff.id,
+            email: staff.email,
+            role: staff.role,
+            firstName: staff.firstName,
+            lastName: staff.lastName,
+            isActive: staff.isActive,
+          };
+        } catch (error) {
+          console.error('Authorization error:', error);
+          return null;
         }
-
-        const staff = await prisma.staff.findUnique({
-          where: { email: credentials.email as string },
-        });
-
-        if (!staff) {
-          throw new Error('Invalid email or password');
-        }
-
-        if (!staff.isActive) {
-          throw new Error('Account is inactive. Please contact administrator.');
-        }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password as string,
-          staff.password
-        );
-
-        if (!isPasswordValid) {
-          throw new Error('Invalid email or password');
-        }
-
-        return {
-          id: staff.id,
-          email: staff.email,
-          role: staff.role,
-          firstName: staff.firstName,
-          lastName: staff.lastName,
-          isActive: staff.isActive,
-        };
       },
     }),
   ],

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { submitContactForm } from '@/actions/contact.actions';
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,20 +48,27 @@ export default function ContactPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const result = await submitContactForm(formData);
 
-    toast.success(
-      'Message sent successfully! We&apos;ll get back to you soon.'
-    );
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      subject: '',
-      message: '',
-    });
-    setIsSubmitting(false);
+      if (result.success) {
+        toast.success(result.message);
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          subject: '',
+          message: '',
+        });
+      } else {
+        toast.error(result.error || 'Failed to send message');
+      }
+    } catch (error) {
+      toast.error('An unexpected error occurred. Please try again.');
+      console.error('Contact form error:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (
@@ -247,15 +255,14 @@ export default function ContactPage() {
               <Card className="overflow-hidden">
                 <div className="aspect-video bg-muted relative">
                   <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.2412648750455!2d-73.98784368459395!3d40.74844097932847!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259a9b3117469%3A0xd134e199a405a163!2sEmpire%20State%20Building!5e0!3m2!1sen!2sus!4v1234567890123!5m2!1sen!2sus"
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d20638.100800079294!2d-0.1646569128417918!3d5.646932200000006!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xfdf8355c3334e97%3A0xe88a75a0c35e6671!2sAfrokan%20Hotel!5e1!3m2!1sen!2sgh!4v1763221736917!5m2!1sen!2sgh"
                     width="100%"
                     height="100%"
                     style={{ border: 0 }}
                     allowFullScreen
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
-                    title="Hotel Location"
-                  />
+                  ></iframe>
                 </div>
               </Card>
 
@@ -328,7 +335,7 @@ export default function ContactPage() {
                 className="inline-flex items-center justify-center px-8 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors"
               >
                 <Phone className="w-5 h-5 mr-2" />
-                Call Now: +1 (555) 123-4567
+                Call Now: +233 54 123 4567
               </a>
               <a
                 href="mailto:info@hotel.com"

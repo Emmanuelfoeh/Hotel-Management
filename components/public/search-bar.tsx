@@ -1,24 +1,46 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Calendar, Users, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 export function SearchBar() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [guests, setGuests] = useState('2');
 
+  // Read URL params on mount
+  useEffect(() => {
+    const checkInParam = searchParams.get('checkIn');
+    const checkOutParam = searchParams.get('checkOut');
+    const guestsParam = searchParams.get('guests');
+    
+    if (checkInParam) setCheckIn(checkInParam);
+    if (checkOutParam) setCheckOut(checkOutParam);
+    if (guestsParam) setGuests(guestsParam);
+  }, [searchParams]);
+
   const handleSearch = () => {
-    const params = new URLSearchParams({
-      checkIn,
-      checkOut,
-      guests,
-    });
-    router.push(`/rooms?${params.toString()}`);
+    const params = new URLSearchParams();
+    
+    if (checkIn) params.set('checkIn', checkIn);
+    if (checkOut) params.set('checkOut', checkOut);
+    if (guests) params.set('guests', guests);
+    
+    const url = `/rooms?${params.toString()}`;
+    
+    // Force refresh if already on rooms page
+    if (pathname === '/rooms') {
+      window.location.href = url;
+    } else {
+      router.push(url);
+    }
   };
 
   return (

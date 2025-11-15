@@ -44,6 +44,37 @@ function RoomsPageContent() {
   const [allRooms, setAllRooms] = useState<Room[]>([]);
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchParams, setSearchParams] = useState<{
+    guests?: string;
+    checkIn?: string;
+    checkOut?: string;
+  }>({});
+
+  // Read URL search parameters on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const guests = params.get('guests');
+    const checkIn = params.get('checkIn');
+    const checkOut = params.get('checkOut');
+
+    const searchData: { guests?: string; checkIn?: string; checkOut?: string } =
+      {};
+
+    if (guests) {
+      searchData.guests = guests;
+      setCapacity(guests);
+      console.log('Setting capacity filter to:', guests);
+    }
+
+    if (checkIn) searchData.checkIn = checkIn;
+    if (checkOut) searchData.checkOut = checkOut;
+
+    setSearchParams(searchData);
+
+    if (checkIn || checkOut) {
+      console.log('Search dates - Check-in:', checkIn, 'Check-out:', checkOut);
+    }
+  }, []);
 
   // Fetch rooms from API
   useEffect(() => {
@@ -51,8 +82,8 @@ function RoomsPageContent() {
       setLoading(true);
       const result = await getPublicRooms();
       if (result.success && result.data) {
+        console.log('Loaded rooms:', result.data.length);
         setAllRooms(result.data);
-        setFilteredRooms(result.data);
       }
       setLoading(false);
     }
@@ -61,11 +92,18 @@ function RoomsPageContent() {
 
   // Filter rooms based on selected criteria
   useEffect(() => {
-    let filtered = allRooms;
+    if (allRooms.length === 0) {
+      setFilteredRooms([]);
+      return;
+    }
+
+    let filtered = [...allRooms];
+    console.log('Starting filter with', filtered.length, 'rooms');
 
     // Filter by type
     if (activeFilter !== 'All') {
       filtered = filtered.filter((room) => room.type === activeFilter);
+      console.log('After type filter:', filtered.length, 'rooms');
     }
 
     // Filter by price range
@@ -73,18 +111,33 @@ function RoomsPageContent() {
       filtered = filtered.filter(
         (room) => room.price >= Number(priceRange.min)
       );
+      console.log('After min price filter:', filtered.length, 'rooms');
     }
     if (priceRange.max) {
       filtered = filtered.filter(
         (room) => room.price <= Number(priceRange.max)
       );
+      console.log('After max price filter:', filtered.length, 'rooms');
     }
 
     // Filter by capacity
     if (capacity && capacity !== 'any') {
-      filtered = filtered.filter((room) => room.capacity >= Number(capacity));
+      const minCapacity = Number(capacity);
+      filtered = filtered.filter((room) => {
+        const matches = room.capacity >= minCapacity;
+        console.log(
+          `Room ${room.name}: capacity ${room.capacity} >= ${minCapacity}? ${matches}`
+        );
+        return matches;
+      });
+      console.log(
+        'After capacity filter (>= ' + capacity + ' guests):',
+        filtered.length,
+        'rooms'
+      );
     }
 
+    console.log('Final filtered rooms:', filtered.length);
     setFilteredRooms(filtered);
   }, [activeFilter, priceRange, capacity, allRooms]);
 

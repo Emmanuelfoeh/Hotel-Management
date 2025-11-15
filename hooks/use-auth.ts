@@ -33,7 +33,26 @@ export function useAuth() {
       });
 
       if (result?.error) {
-        return { success: false, error: result.error };
+        // Map NextAuth error codes to user-friendly messages
+        let errorMessage = 'Invalid email or password';
+
+        if (result.error === 'CredentialsSignin') {
+          errorMessage = 'Invalid email or password';
+        } else if (result.error === 'Configuration') {
+          errorMessage = 'Authentication configuration error';
+        } else if (result.error !== 'CredentialsSignin') {
+          // If it's a custom error message, use it
+          errorMessage = result.error;
+        }
+
+        return { success: false, error: errorMessage };
+      }
+
+      if (!result?.ok) {
+        return {
+          success: false,
+          error: 'Authentication failed. Please try again.',
+        };
       }
 
       return { success: true };

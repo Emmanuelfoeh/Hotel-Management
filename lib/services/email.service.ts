@@ -39,6 +39,14 @@ interface CheckInWelcomeData {
   wifiPassword?: string;
 }
 
+export interface ContactFormData {
+  name: string;
+  email: string;
+  phone?: string;
+  subject: string;
+  message: string;
+}
+
 /**
  * Send a generic email
  */
@@ -609,4 +617,136 @@ export async function sendCheckInWelcomeEmail(
     subject: `Welcome to Our Hotel - ${data.bookingNumber}`,
     html,
   });
+}
+
+
+
+
+export async function sendContactEmail(data: ContactFormData) {
+  const { name, email, phone, subject, message } = data;
+
+  try {
+    const result = await resend.emails.send({
+      from: process.env.EMAIL_FROM || 'noreply@hotel.com',
+      to:
+        process.env.CONTACT_EMAIL || process.env.EMAIL_FROM || 'info@hotel.com',
+      subject: `Contact Form: ${subject}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+              }
+              .header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 30px;
+                border-radius: 8px 8px 0 0;
+                text-align: center;
+              }
+              .content {
+                background: #f9fafb;
+                padding: 30px;
+                border: 1px solid #e5e7eb;
+                border-top: none;
+              }
+              .field {
+                margin-bottom: 20px;
+              }
+              .label {
+                font-weight: 600;
+                color: #4b5563;
+                display: block;
+                margin-bottom: 5px;
+              }
+              .value {
+                color: #1f2937;
+                padding: 10px;
+                background: white;
+                border-radius: 4px;
+                border: 1px solid #e5e7eb;
+              }
+              .message-box {
+                background: white;
+                padding: 15px;
+                border-radius: 4px;
+                border: 1px solid #e5e7eb;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+              }
+              .footer {
+                text-align: center;
+                padding: 20px;
+                color: #6b7280;
+                font-size: 14px;
+                border-top: 1px solid #e5e7eb;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1 style="margin: 0; font-size: 24px;">New Contact Form Submission</h1>
+            </div>
+            <div class="content">
+              <div class="field">
+                <span class="label">From:</span>
+                <div class="value">${name}</div>
+              </div>
+              
+              <div class="field">
+                <span class="label">Email:</span>
+                <div class="value">
+                  <a href="mailto:${email}" style="color: #667eea; text-decoration: none;">${email}</a>
+                </div>
+              </div>
+              
+              ${
+                phone
+                  ? `
+              <div class="field">
+                <span class="label">Phone:</span>
+                <div class="value">
+                  <a href="tel:${phone}" style="color: #667eea; text-decoration: none;">${phone}</a>
+                </div>
+              </div>
+              `
+                  : ''
+              }
+              
+              <div class="field">
+                <span class="label">Subject:</span>
+                <div class="value">${subject}</div>
+              </div>
+              
+              <div class="field">
+                <span class="label">Message:</span>
+                <div class="message-box">${message}</div>
+              </div>
+            </div>
+            <div class="footer">
+              <p>This email was sent from the contact form on your hotel website.</p>
+              <p>Reply directly to this email to respond to ${name}.</p>
+            </div>
+          </body>
+        </html>
+      `,
+      replyTo: email,
+    });
+
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Failed to send contact email:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to send email',
+    };
+  }
 }

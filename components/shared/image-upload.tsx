@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { X, Upload, Loader2, ImageIcon } from 'lucide-react';
 import { useUploadThing } from '@/lib/uploadthing';
@@ -24,7 +24,6 @@ export function ImageUpload({
   disabled = false,
   endpoint = 'roomImage',
 }: ImageUploadProps) {
-  const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
 
   const { startUpload, isUploading } = useUploadThing(endpoint, {
@@ -34,13 +33,10 @@ export function ImageUpload({
         onChange([...value, ...urls]);
         toast.success(`${res.length} image(s) uploaded successfully`);
       }
-      // Reset upload state
-      setUploading(false);
       setUploadProgress(0);
     },
     onUploadError: (error: Error) => {
       toast.error(`Upload failed: ${error.message}`);
-      setUploading(false);
       setUploadProgress(0);
     },
     onUploadProgress: (progress) => {
@@ -48,18 +44,9 @@ export function ImageUpload({
     },
   });
 
-  // Sync internal uploading state with hook's isUploading
-  useEffect(() => {
-    if (!isUploading && uploading) {
-      // If hook says not uploading but we think we are, reset
-      setUploading(false);
-      setUploadProgress(0);
-    }
-  }, [isUploading, uploading]);
-
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
-      if (disabled || uploading) return;
+      if (disabled || isUploading) return;
 
       const remainingSlots = maxFiles - value.length;
       if (acceptedFiles.length > remainingSlots) {
@@ -71,7 +58,6 @@ export function ImageUpload({
         return;
       }
 
-      setUploading(true);
       setUploadProgress(0);
 
       try {
@@ -79,11 +65,10 @@ export function ImageUpload({
       } catch (error) {
         console.error('Upload error:', error);
         toast.error('Failed to upload images');
-        setUploading(false);
         setUploadProgress(0);
       }
     },
-    [disabled, uploading, maxFiles, value.length, startUpload]
+    [disabled, isUploading, maxFiles, value.length, startUpload]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -92,7 +77,7 @@ export function ImageUpload({
       'image/*': ['.png', '.jpg', '.jpeg', '.webp'],
     },
     maxFiles: maxFiles - value.length,
-    disabled: disabled || uploading || value.length >= maxFiles,
+    disabled: disabled || isUploading || value.length >= maxFiles,
   });
 
   const removeImage = (url: string) => {
@@ -112,13 +97,13 @@ export function ImageUpload({
             isDragActive
               ? 'border-primary bg-primary/5'
               : 'border-muted-foreground/25 hover:border-primary/50',
-            (disabled || uploading) && 'opacity-50 cursor-not-allowed',
-            uploading && 'pointer-events-none'
+            (disabled || isUploading) && 'opacity-50 cursor-not-allowed',
+            isUploading && 'pointer-events-none'
           )}
         >
           <input {...getInputProps()} />
           <div className="flex flex-col items-center justify-center gap-2">
-            {uploading ? (
+            {isUploading ? (
               <>
                 <Loader2 className="h-10 w-10 text-primary animate-spin" />
                 <p className="text-sm text-muted-foreground">
@@ -184,7 +169,7 @@ export function ImageUpload({
       )}
 
       {/* Empty State */}
-      {value.length === 0 && !uploading && (
+      {value.length === 0 && !isUploading && (
         <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
           <ImageIcon className="h-12 w-12 mb-2" />
           <p className="text-sm">No images uploaded yet</p>

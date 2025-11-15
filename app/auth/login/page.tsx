@@ -49,23 +49,49 @@ function LoginForm() {
   });
 
   async function onSubmit(data: LoginFormValues) {
-    login(
-      { ...data, callbackUrl },
-      {
-        onSuccess: (response) => {
-          if (response.success) {
-            toast.success('Signed in successfully!');
-            router.push(callbackUrl);
-            router.refresh();
-          } else {
-            toast.error(response.error || 'Invalid credentials');
-          }
-        },
-        onError: (error: any) => {
-          toast.error(error.message || 'An unexpected error occurred');
-        },
-      }
-    );
+    try {
+      login(
+        { ...data, callbackUrl },
+        {
+          onSuccess: (response) => {
+            if (response.success) {
+              toast.success('Signed in successfully!');
+              router.push(callbackUrl);
+              router.refresh();
+            } else {
+              // Show error message from the response
+              const errorMessage =
+                response.error || 'Invalid email or password';
+              toast.error(errorMessage);
+
+              // Also set form error for better UX
+              form.setError('root', {
+                type: 'manual',
+                message: errorMessage,
+              });
+            }
+          },
+          onError: (error: any) => {
+            const errorMessage =
+              error.message || 'An unexpected error occurred';
+            toast.error(errorMessage);
+
+            // Set form error
+            form.setError('root', {
+              type: 'manual',
+              message: errorMessage,
+            });
+          },
+        }
+      );
+    } catch (error: any) {
+      const errorMessage = error.message || 'An unexpected error occurred';
+      toast.error(errorMessage);
+      form.setError('root', {
+        type: 'manual',
+        message: errorMessage,
+      });
+    }
   }
 
   return (
@@ -79,6 +105,12 @@ function LoginForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {form.formState.errors.root && (
+              <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                {form.formState.errors.root.message}
+              </div>
+            )}
+
             <FormField
               control={form.control}
               name="email"
